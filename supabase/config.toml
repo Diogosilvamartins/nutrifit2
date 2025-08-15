@@ -1,0 +1,4 @@
+project_id = "zkxkbghzlfadkpdkctkx"
+
+[functions.correios-frete]
+verify_jwt = false
