@@ -25,34 +25,28 @@ jobs:
           echo "$DIFF" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: 'Call Gemini for Review'
+     - name: 'Call Gemini for Review'
         id: gemini_review
         run: |
-          PROMPT="Você é um revisor de código sênior, especialista em Dart e Flutter. Sua tarefa é revisar o seguinte diff de um Pull Request.
-          
-          Regras da revisão:
-          1. Foque em potenciais bugs, problemas de performance, e desvios das boas práticas do Flutter (ex: 'const' em widgets, estado imutável).
-          2. Seja conciso e direto.
-          3. Se não houver problemas, apenas responda 'O código parece bom, nenhuma sugestão.'
-          4. Formate sua resposta em Markdown.
-          
-          Aqui está o diff para revisar:
-          \`\`\`diff
-          ${{ steps.get_diff.outputs.diff_content }}
-          \`\`\`"
-          
-          JSON_PAYLOAD=$(jq -n --arg prompt "$PROMPT" \
-            '{ "contents": [ { "parts": [ { "text": $prompt } ] } ] }')
+          # Esta nova versão constrói o payload JSON de forma mais segura para evitar
+          # erros com caracteres especiais no diff do código.
+          JSON_PAYLOAD=$(jq -n --arg diff_content "${{ steps.get_diff.outputs.diff_content }}" '{
+            "contents": [{
+              "parts": [{
+                "text": "Você é um revisor de código sênior, especialista em Dart e Flutter. Sua tarefa é revisar o seguinte diff de um Pull Request.\n\nRegras da revisão:\n1. Foque em potenciais bugs, problemas de performance, e desvios das boas práticas do Flutter (ex: \"const\" em widgets, estado imutável).\n2. Seja conciso e direto.\n3. Se não houver problemas, apenas responda \"O código parece bom, nenhuma sugestão.\".\n4. Formate sua resposta em Markdown.\n\nAqui está o diff para revisar:\n```diff\n" + $diff_content + "\n```"
+              }]
+            }]
+          }')
 
           API_RESPONSE=$(curl -s -H "Content-Type: application/json" \
             -d "$JSON_PAYLOAD" \
-            "https://generativelenlanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${{ secrets.GEMINI_API_KEY }}")
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${{ secrets.GEMINI_API_KEY }}")
             
-          REVIEW_COMMENT=$(echo $API_RESPONSE | jq -r '.candidates[0].content.parts[0].text')
+          REVIEW_COMMENT=$(echo "$API_RESPONSE" | jq -r ".candidates[0].content.parts[0].text")
           
-          echo "review_comment<<EOF" >> $GITHUB_OUTPUT
-          echo "$REVIEW_COMMENT" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "review_comment<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$REVIEW_COMMENT" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
 
       - name: 'Comment on Pull Request'
         uses: actions/github-script@v7
