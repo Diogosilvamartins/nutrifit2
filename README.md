@@ -1,3 +1,4 @@
+# Testando a integração com a IA do Gemini.
 # Welcome to your Lovable project
 
 ## Project info
