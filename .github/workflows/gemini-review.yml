@@ -1,5 +1,3 @@
-# .github/workflows/gemini-review.yml
-
 name: 'Gemini AI Code Review'
 
 on:
@@ -17,14 +15,12 @@ jobs:
       - name: 'Checkout Repository'
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Necessário para comparar as branches
+          fetch-depth: 0
 
       - name: 'Get Pull Request Diff'
         id: get_diff
         run: |
-          # Pega a diferença de código entre a branch do PR e a branch base
           DIFF=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
-          # Coloca o diff em uma variável de saída para usar em outros steps
           echo "diff_content<<EOF" >> $GITHUB_OUTPUT
           echo "$DIFF" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -32,32 +28,28 @@ jobs:
       - name: 'Call Gemini for Review'
         id: gemini_review
         run: |
-          # Prepara o prompt para o Gemini, focado em Dart e Flutter
           PROMPT="Você é um revisor de código sênior, especialista em Dart e Flutter. Sua tarefa é revisar o seguinte diff de um Pull Request.
-
+          
           Regras da revisão:
           1. Foque em potenciais bugs, problemas de performance, e desvios das boas práticas do Flutter (ex: 'const' em widgets, estado imutável).
           2. Seja conciso e direto.
           3. Se não houver problemas, apenas responda 'O código parece bom, nenhuma sugestão.'
           4. Formate sua resposta em Markdown.
-
+          
           Aqui está o diff para revisar:
           \`\`\`diff
           ${{ steps.get_diff.outputs.diff_content }}
           \`\`\`"
-
-          # Monta o JSON para a API do Gemini
+          
           JSON_PAYLOAD=$(jq -n --arg prompt "$PROMPT" \
             '{ "contents": [ { "parts": [ { "text": $prompt } ] } ] }')
 
-          # Chama a API do Gemini e armazena a resposta
           API_RESPONSE=$(curl -s -H "Content-Type: application/json" \
             -d "$JSON_PAYLOAD" \
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${{ secrets.GEMINI_API_KEY }}")
-
-          # Extrai o texto da resposta e o formata para ser usado depois
+            "https://generativelenlanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${{ secrets.GEMINI_API_KEY }}")
+            
           REVIEW_COMMENT=$(echo $API_RESPONSE | jq -r '.candidates[0].content.parts[0].text')
-
+          
           echo "review_comment<<EOF" >> $GITHUB_OUTPUT
           echo "$REVIEW_COMMENT" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
