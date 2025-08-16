@@ -36,6 +36,7 @@ interface Quote {
   customer_phone?: string;
   customer_email?: string;
   customer_cpf?: string;
+  salesperson_id?: string;
   products: CartItem[];
   subtotal: number;
   discount_amount: number;
@@ -51,12 +52,19 @@ interface Quote {
   sale_date?: string;
 }
 
+interface Profile {
+  user_id: string;
+  full_name: string;
+  role: string;
+}
+
 export default function PointOfSale() {
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [salespeople, setSalespeople] = useState<Profile[]>([]);
   const [quote, setQuote] = useState<Quote>({
     customer_name: "",
     customer_phone: "",
@@ -80,7 +88,24 @@ export default function PointOfSale() {
 
   useEffect(() => {
     fetchProducts();
+    fetchSalespeople();
   }, []);
+
+  const fetchSalespeople = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, role')
+        .in('role', ['manager', 'user'])
+        .eq('is_active', true)
+        .order('full_name');
+      
+      if (error) throw error;
+      setSalespeople(data || []);
+    } catch (error) {
+      console.error("Error fetching salespeople:", error);
+    }
+  };
 
   useEffect(() => {
     const filtered = products.filter(product =>
@@ -272,6 +297,7 @@ export default function PointOfSale() {
         notes: quote.notes,
         payment_method: quote.payment_method,
         payment_status: type === "sale" ? "paid" : "pending",
+        salesperson_id: quote.salesperson_id,
         created_by: (await supabase.auth.getUser()).data.user?.id
       };
 
@@ -495,6 +521,23 @@ Nutri & Fit Suplementos`;
                   onChange={(e) => setQuote({ ...quote, customer_cpf: e.target.value })}
                 />
               </div>
+            </div>
+            
+            {/* Vendedor */}
+            <div className="space-y-2">
+              <Label htmlFor="salesperson">Vendedor</Label>
+              <Select value={quote.salesperson_id} onValueChange={(value) => setQuote({ ...quote, salesperson_id: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o vendedor..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {salespeople.map((person) => (
+                    <SelectItem key={person.user_id} value={person.user_id}>
+                      {person.full_name} ({person.role})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             
             {/* Data da Venda */}

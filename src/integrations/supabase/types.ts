@@ -92,6 +92,117 @@ export type Database = {
         }
         Relationships: []
       }
+      commission_records: {
+        Row: {
+          commission_amount: number
+          commission_percentage: number
+          created_at: string
+          created_by: string | null
+          id: string
+          paid_at: string | null
+          payment_status: string
+          sale_amount: number
+          sale_id: string
+          sale_type: string
+          salesperson_id: string
+        }
+        Insert: {
+          commission_amount: number
+          commission_percentage: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_status?: string
+          sale_amount: number
+          sale_id: string
+          sale_type: string
+          salesperson_id: string
+        }
+        Update: {
+          commission_amount?: number
+          commission_percentage?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_status?: string
+          sale_amount?: number
+          sale_id?: string
+          sale_type?: string
+          salesperson_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_records_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "commission_records_salesperson_id_fkey"
+            columns: ["salesperson_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      commissions: {
+        Row: {
+          commission_percentage: number
+          commission_type: string
+          created_at: string
+          created_by: string | null
+          fixed_amount: number | null
+          id: string
+          is_active: boolean
+          product_category: string | null
+          salesperson_id: string
+          updated_at: string
+        }
+        Insert: {
+          commission_percentage?: number
+          commission_type?: string
+          created_at?: string
+          created_by?: string | null
+          fixed_amount?: number | null
+          id?: string
+          is_active?: boolean
+          product_category?: string | null
+          salesperson_id: string
+          updated_at?: string
+        }
+        Update: {
+          commission_percentage?: number
+          commission_type?: string
+          created_at?: string
+          created_by?: string | null
+          fixed_amount?: number | null
+          id?: string
+          is_active?: boolean
+          product_category?: string | null
+          salesperson_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commissions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "commissions_salesperson_id_fkey"
+            columns: ["salesperson_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           birth_date: string | null
@@ -184,6 +295,7 @@ export type Database = {
           payment_method: string | null
           pix_phone: string | null
           products: Json
+          salesperson_id: string | null
           shipping_cost: number | null
           shipping_type: string | null
           status: string
@@ -210,6 +322,7 @@ export type Database = {
           payment_method?: string | null
           pix_phone?: string | null
           products: Json
+          salesperson_id?: string | null
           shipping_cost?: number | null
           shipping_type?: string | null
           status?: string
@@ -236,6 +349,7 @@ export type Database = {
           payment_method?: string | null
           pix_phone?: string | null
           products?: Json
+          salesperson_id?: string | null
           shipping_cost?: number | null
           shipping_type?: string | null
           status?: string
@@ -250,6 +364,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_salesperson_id_fkey"
+            columns: ["salesperson_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -356,6 +477,7 @@ export type Database = {
           products: Json
           quote_number: string
           quote_type: string
+          salesperson_id: string | null
           shipping_cost: number | null
           shipping_type: string | null
           status: string
@@ -383,6 +505,7 @@ export type Database = {
           products?: Json
           quote_number: string
           quote_type?: string
+          salesperson_id?: string | null
           shipping_cost?: number | null
           shipping_type?: string | null
           status?: string
@@ -410,6 +533,7 @@ export type Database = {
           products?: Json
           quote_number?: string
           quote_type?: string
+          salesperson_id?: string | null
           shipping_cost?: number | null
           shipping_type?: string | null
           status?: string
@@ -425,6 +549,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_salesperson_id_fkey"
+            columns: ["salesperson_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -664,6 +795,10 @@ export type Database = {
       adjust_cash_balance: {
         Args: { bank_amount: number; cash_amount: number; target_date: string }
         Returns: undefined
+      }
+      calculate_commission: {
+        Args: { sale_amount: number; salesperson_id_param: string }
+        Returns: number
       }
       calculate_shipping_cost: {
         Args: {

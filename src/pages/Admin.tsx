@@ -18,6 +18,7 @@ import Reports from "@/components/admin/Reports";
 import UserManagement from "@/components/admin/UserManagement";
 import SystemManagement from "@/components/admin/SystemManagement";
 import SupplierManagement from "@/components/admin/SupplierManagement";
+import CommissionManagement from "@/components/admin/CommissionManagement";
 import { DownloadImage } from "@/components/ui/download-image";
 
 interface Product {
@@ -126,10 +127,11 @@ const Admin = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-11">
+        <TabsList className="grid w-full grid-cols-12">
           <TabsTrigger value="pdv">PDV</TabsTrigger>
           <TabsTrigger value="orcamentos">Orçamentos</TabsTrigger>
           <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+          <TabsTrigger value="comissoes">Comissões</TabsTrigger>
           <TabsTrigger value="clientes">Clientes</TabsTrigger>
           <TabsTrigger value="produtos">Produtos</TabsTrigger>
           <TabsTrigger value="fornecedores">Fornecedores</TabsTrigger>
@@ -153,6 +155,10 @@ const Admin = () => {
 
         <TabsContent value="orcamentos" className="mt-6">
           <QuotesList />
+        </TabsContent>
+
+        <TabsContent value="comissoes" className="mt-6">
+          <CommissionManagement />
         </TabsContent>
         
         <TabsContent value="clientes" className="mt-6">
