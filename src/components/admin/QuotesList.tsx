@@ -216,7 +216,7 @@ export default function QuotesList() {
     }
   };
 
-  const handleConvertToSale = async (quoteId: string) => {
+  const handleConvertToSale = async (quoteId: string, paymentMethod: string) => {
     if (!user) return;
     
     setIsLoading(true);
@@ -270,7 +270,8 @@ export default function QuotesList() {
         .update({
           quote_type: 'sale',
           status: 'completed',
-          payment_status: 'paid'
+          payment_status: 'paid',
+          payment_method: paymentMethod
         })
         .eq('id', quoteId);
 
@@ -671,21 +672,50 @@ Nutri & Fit Suplementos`;
                         )}
                         
                         {quote.quote_type === 'quote' && quote.status === 'pending' && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="sm"
-                                onClick={() => handleConvertToSale(quote.id)}
-                                disabled={isLoading}
-                                className="bg-green-600 hover:bg-green-700 text-white"
-                              >
-                                <ShoppingCart className="w-4 h-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Converter em venda</p>
-                            </TooltipContent>
-                          </Tooltip>
+                          <Dialog>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <DialogTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    disabled={isLoading}
+                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                  >
+                                    <ShoppingCart className="w-4 h-4" />
+                                  </Button>
+                                </DialogTrigger>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Converter em venda</p>
+                              </TooltipContent>
+                            </Tooltip>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Converter Orçamento em Venda</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <p>Selecione o método de pagamento para converter este orçamento em venda:</p>
+                                <Select
+                                   onValueChange={async (value) => {
+                                     await handleConvertToSale(quote.id, value);
+                                     // Close dialog after successful conversion
+                                     const closeButton = document.querySelector('[data-radix-dialog-close]') as HTMLButtonElement;
+                                     if (closeButton) closeButton.click();
+                                   }}
+                                 >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Selecione o método de pagamento" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                                    <SelectItem value="pix">PIX</SelectItem>
+                                    <SelectItem value="cartao_debito">Cartão de Débito</SelectItem>
+                                    <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
                          )}
                           
                           {quote.status !== 'canceled' && (
