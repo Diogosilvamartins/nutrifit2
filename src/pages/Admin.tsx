@@ -19,6 +19,7 @@ import UserManagement from "@/components/admin/UserManagement";
 import SystemManagement from "@/components/admin/SystemManagement";
 import SupplierManagement from "@/components/admin/SupplierManagement";
 import CommissionManagement from "@/components/admin/CommissionManagement";
+import SalesReport from "@/components/admin/SalesReport";
 import { DownloadImage } from "@/components/ui/download-image";
 
 interface Product {
@@ -139,7 +140,7 @@ const Admin = () => {
           <TabsTrigger value="pedidos">Pedidos</TabsTrigger>
           <TabsTrigger value="usuarios">Usuários</TabsTrigger>
           <TabsTrigger value="sistema">Sistema</TabsTrigger>
-          <TabsTrigger value="relatorios">Relatórios</TabsTrigger>
+          <TabsTrigger value="vendas-relatorio">Vendas</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pdv" className="mt-6">
@@ -235,6 +236,10 @@ const Admin = () => {
           </div>
         </TabsContent>
 
+        <TabsContent value="vendas-relatorio" className="mt-6">
+          <SalesReport />
+        </TabsContent>
+        
         <TabsContent value="relatorios" className="mt-6">
           <Reports />
         </TabsContent>
