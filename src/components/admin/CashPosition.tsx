@@ -108,11 +108,21 @@ export default function CashPosition() {
           created_at: movement.created_at,
         })) || [];
 
+        // Compute totals from fetched movements to avoid RPC mismatches
+        const computedTotals = cashEntries.reduce(
+          (acc, e) => {
+            if (e.type === 'entrada') acc.entries += e.amount;
+            if (e.type === 'saida') acc.exits += e.amount;
+            return acc;
+          },
+          { entries: 0, exits: 0 }
+        );
+
         setEntries(cashEntries);
         setSummary({
           opening_balance: Number(summary.opening_balance),
-          total_entries: Number(summary.total_entries),
-          total_exits: Number(summary.total_exits),
+          total_entries: Number(computedTotals.entries),
+          total_exits: Number(computedTotals.exits),
           current_balance: Number(summary.current_balance),
           sales_cash: Number(summary.sales_cash),
           sales_pix: Number(summary.sales_pix),
@@ -154,11 +164,21 @@ export default function CashPosition() {
             created_at: movement.created_at,
           })) || [];
 
+          // Compute totals from fetched movements to ensure consistency
+          const computedTotals = cashEntries.reduce(
+            (acc, e) => {
+              if (e.type === 'entrada') acc.entries += e.amount;
+              if (e.type === 'saida') acc.exits += e.amount;
+              return acc;
+            },
+            { entries: 0, exits: 0 }
+          );
+
           setEntries(cashEntries);
           setSummary({
             opening_balance: 0,
-            total_entries: Number(periodData.total_cash_entries) + Number(periodData.total_bank_entries),
-            total_exits: Number(periodData.total_cash_exits) + Number(periodData.total_bank_exits),
+            total_entries: Number(computedTotals.entries),
+            total_exits: Number(computedTotals.exits),
             current_balance: Number(periodData.accumulated_cash_balance),
             sales_cash: Number(periodData.total_cash_entries),
             sales_pix: Number(periodData.total_bank_entries),
