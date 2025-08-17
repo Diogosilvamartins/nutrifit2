@@ -38,8 +38,8 @@ export default function SalesReport() {
     try {
       setLoading(true)
       
-      // Buscar vendas com dados de comissão e vendedor
-      const { data: salesData, error } = await supabase
+      // Buscar vendas 
+      const { data: salesData, error: salesError } = await supabase
         .from('quotes')
         .select(`
           id,
@@ -52,16 +52,31 @@ export default function SalesReport() {
           salesperson_id,
           profiles!quotes_salesperson_id_fkey (
             full_name
-          ),
-          commission_records (
-            commission_amount
           )
         `)
         .eq('quote_type', 'sale')
         .eq('status', 'completed')
         .order('created_at', { ascending: false })
 
-      if (error) throw error
+      if (salesError) throw salesError
+
+      // Buscar comissões separadamente 
+      const { data: commissionsData, error: commissionsError } = await supabase
+        .from('commission_records')
+        .select('sale_id, commission_amount')
+        .eq('sale_type', 'quote')
+
+      if (commissionsError) {
+        console.error('Error fetching commissions:', commissionsError)
+      }
+
+      // Criar mapa de comissões por sale_id
+      const commissionsMap = new Map()
+      if (commissionsData) {
+        commissionsData.forEach(commission => {
+          commissionsMap.set(commission.sale_id, commission.commission_amount)
+        })
+      }
 
       const formattedSales: SaleReport[] = salesData?.map(sale => ({
         id: sale.id,
@@ -70,7 +85,7 @@ export default function SalesReport() {
         products: Array.isArray(sale.products) ? sale.products : [],
         salesperson_name: sale.profiles?.full_name || 'Sem vendedor',
         total_amount: sale.total_amount,
-        commission_amount: Array.isArray(sale.commission_records) ? sale.commission_records[0]?.commission_amount || 0 : 0,
+        commission_amount: commissionsMap.get(sale.id) || 0,
         payment_method: sale.payment_method || '',
         quote_number: sale.quote_number
       })) || []

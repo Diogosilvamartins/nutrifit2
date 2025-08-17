@@ -735,10 +735,10 @@ Nutri & Fit Suplementos`;
                             </Tooltip>
                           )}
                         
-                         {quote.status !== 'canceled' && (
+                          {quote.status !== 'canceled' && (
                            <AlertDialog>
-                             <AlertDialogTrigger asChild>
-                               <Tooltip>
+                             <Tooltip>
+                               <AlertDialogTrigger asChild>
                                  <TooltipTrigger asChild>
                                    <Button 
                                      variant="outline" 
@@ -748,11 +748,11 @@ Nutri & Fit Suplementos`;
                                      <XCircle className="h-4 w-4" />
                                    </Button>
                                  </TooltipTrigger>
-                                 <TooltipContent>
-                                   <p>Cancelar</p>
-                                 </TooltipContent>
-                               </Tooltip>
-                             </AlertDialogTrigger>
+                               </AlertDialogTrigger>
+                               <TooltipContent>
+                                 <p>Cancelar</p>
+                               </TooltipContent>
+                             </Tooltip>
                              <AlertDialogContent>
                                <AlertDialogHeader>
                                  <AlertDialogTitle>Cancelar {quote.quote_type === 'sale' ? 'Venda' : 'Orçamento'}</AlertDialogTitle>
@@ -775,7 +775,10 @@ Nutri & Fit Suplementos`;
                                <AlertDialogFooter>
                                  <AlertDialogCancel>Voltar</AlertDialogCancel>
                                  <AlertDialogAction 
-                                    onClick={() => handleCancelQuote(quote.id)} 
+                                    onClick={(e) => {
+                                      console.log('AlertDialogAction clicked for quote:', quote.id);
+                                      handleCancelQuote(quote.id);
+                                    }} 
                                     disabled={isLoading}
                                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                   >
@@ -784,7 +787,7 @@ Nutri & Fit Suplementos`;
                                </AlertDialogFooter>
                              </AlertDialogContent>
                            </AlertDialog>
-                         )}
+                          )}
                       </div>
                   </div>
                 </CardContent>
