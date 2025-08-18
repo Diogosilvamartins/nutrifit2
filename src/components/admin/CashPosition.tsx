@@ -55,6 +55,7 @@ export default function CashPosition() {
     amount: 0,
     description: '',
     category: '',
+    source: 'caixa' as 'caixa' | 'banco', // Nova propriedade para identificar origem
     date: new Date().toISOString().split('T')[0],
   });
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
@@ -112,17 +113,17 @@ export default function CashPosition() {
         const computedTotals = cashEntries.reduce(
           (acc, e) => {
             if (e.type === 'entrada') {
-              if (e.category === 'dinheiro') {
+              if (['dinheiro', 'venda', 'troco'].includes(e.category)) {
                 acc.cashEntries += e.amount;
-              } else if (['pix', 'cartao_debito', 'cartao_credito'].includes(e.category)) {
+              } else if (['pix', 'cartao_debito', 'cartao_credito', 'transferencia'].includes(e.category)) {
                 acc.bankEntries += e.amount;
               }
               acc.entries += e.amount;
             }
             if (e.type === 'saida') {
-              if (e.category === 'dinheiro' || e.category === 'sangria') {
+              if (['dinheiro', 'sangria', 'troco'].includes(e.category)) {
                 acc.cashExits += e.amount;
-              } else if (['pix', 'cartao_debito', 'cartao_credito', 'despesa'].includes(e.category)) {
+              } else if (['pix', 'cartao_debito', 'cartao_credito', 'despesa', 'transferencia'].includes(e.category)) {
                 acc.bankExits += e.amount;
               }
               acc.exits += e.amount;
@@ -193,17 +194,17 @@ export default function CashPosition() {
           const computedTotals = cashEntries.reduce(
             (acc, e) => {
               if (e.type === 'entrada') {
-                if (e.category === 'dinheiro') {
+                if (['dinheiro', 'venda', 'troco'].includes(e.category)) {
                   acc.cashEntries += e.amount;
-                } else if (['pix', 'cartao_debito', 'cartao_credito'].includes(e.category)) {
+                } else if (['pix', 'cartao_debito', 'cartao_credito', 'transferencia'].includes(e.category)) {
                   acc.bankEntries += e.amount;
                 }
                 acc.entries += e.amount;
               }
               if (e.type === 'saida') {
-                if (e.category === 'dinheiro' || e.category === 'sangria') {
+                if (['dinheiro', 'sangria', 'troco'].includes(e.category)) {
                   acc.cashExits += e.amount;
-                } else if (['pix', 'cartao_debito', 'cartao_credito', 'despesa'].includes(e.category)) {
+                } else if (['pix', 'cartao_debito', 'cartao_credito', 'despesa', 'transferencia'].includes(e.category)) {
                   acc.bankExits += e.amount;
                 }
                 acc.exits += e.amount;
@@ -260,6 +261,22 @@ export default function CashPosition() {
     }
 
     try {
+      // Determinar a categoria baseada no tipo e origem
+      let finalCategory = newEntry.category;
+      if (newEntry.type === 'saida') {
+        if (newEntry.source === 'caixa') {
+          finalCategory = newEntry.category === 'sangria' ? 'sangria' : 'dinheiro';
+        } else {
+          finalCategory = newEntry.category === 'despesa' ? 'despesa' : newEntry.category;
+        }
+      } else if (newEntry.type === 'entrada') {
+        if (newEntry.source === 'caixa') {
+          finalCategory = newEntry.category === 'venda' ? 'dinheiro' : newEntry.category;
+        } else {
+          finalCategory = newEntry.category; // pix, cartao_debito, etc.
+        }
+      }
+
       const { error } = await supabase
         .from('cash_movements')
         .insert({
@@ -267,7 +284,7 @@ export default function CashPosition() {
           type: newEntry.type,
           amount: newEntry.amount,
           description: newEntry.description,
-          category: newEntry.category,
+          category: finalCategory,
         });
 
       if (error) throw error;
@@ -278,6 +295,7 @@ export default function CashPosition() {
         amount: 0,
         description: '',
         category: '',
+        source: 'caixa',
         date: selectedDate,
       });
 
@@ -358,14 +376,18 @@ export default function CashPosition() {
   const getCategoryBadge = (category: string) => {
     const categoryConfig = {
       abertura: { label: "Abertura", variant: "secondary" as const },
-      dinheiro: { label: "Dinheiro", variant: "default" as const },
-      pix: { label: "PIX", variant: "default" as const },
-      cartao_debito: { label: "Cartão Débito", variant: "outline" as const },
-      cartao_credito: { label: "Cartão Crédito", variant: "outline" as const },
-      despesa: { label: "Despesa", variant: "destructive" as const },
-      sangria: { label: "Sangria", variant: "destructive" as const },
-      saldo_caixa: { label: "Ajuste Caixa", variant: "secondary" as const },
-      saldo_banco: { label: "Ajuste Banco", variant: "secondary" as const },
+      dinheiro: { label: "💵 Dinheiro", variant: "default" as const },
+      venda: { label: "💰 Venda", variant: "default" as const },
+      troco: { label: "🔄 Troco", variant: "outline" as const },
+      pix: { label: "📱 PIX", variant: "default" as const },
+      cartao_debito: { label: "💳 Débito", variant: "outline" as const },
+      cartao_credito: { label: "💳 Crédito", variant: "outline" as const },
+      transferencia: { label: "🏦 Transferência", variant: "outline" as const },
+      despesa: { label: "💸 Despesa", variant: "destructive" as const },
+      sangria: { label: "📤 Sangria", variant: "destructive" as const },
+      saldo_caixa: { label: "⚖️ Ajuste Caixa", variant: "secondary" as const },
+      saldo_banco: { label: "⚖️ Ajuste Banco", variant: "secondary" as const },
+      outros: { label: "📋 Outros", variant: "secondary" as const },
     };
 
     const config = categoryConfig[category as keyof typeof categoryConfig] || 
@@ -594,12 +616,12 @@ export default function CashPosition() {
           <CardTitle>Nova Movimentação</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
             <div>
               <Label htmlFor="type">Tipo</Label>
               <Select 
                 value={newEntry.type} 
-                onValueChange={(value: 'entrada' | 'saida') => setNewEntry({ ...newEntry, type: value })}
+                onValueChange={(value: 'entrada' | 'saida') => setNewEntry({ ...newEntry, type: value, category: '' })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -607,6 +629,22 @@ export default function CashPosition() {
                 <SelectContent>
                   <SelectItem value="entrada">Entrada</SelectItem>
                   <SelectItem value="saida">Saída</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="source">Local</Label>
+              <Select 
+                value={newEntry.source} 
+                onValueChange={(value: 'caixa' | 'banco') => setNewEntry({ ...newEntry, source: value, category: '' })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="caixa">Caixa (Dinheiro)</SelectItem>
+                  <SelectItem value="banco">Banco (Digital)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -634,22 +672,38 @@ export default function CashPosition() {
                 </SelectTrigger>
                 <SelectContent>
                   {newEntry.type === 'entrada' ? (
-                    <>
-                      <SelectItem value="dinheiro">Dinheiro (Caixa)</SelectItem>
-                      <SelectItem value="pix">PIX (Banco)</SelectItem>
-                      <SelectItem value="cartao_debito">Cartão Débito (Banco)</SelectItem>
-                      <SelectItem value="cartao_credito">Cartão Crédito (Banco)</SelectItem>
-                      <SelectItem value="outros">Outros</SelectItem>
-                    </>
+                    newEntry.source === 'caixa' ? (
+                      <>
+                        <SelectItem value="venda">Venda em Dinheiro</SelectItem>
+                        <SelectItem value="troco">Troco/Devolução</SelectItem>
+                        <SelectItem value="outros">Outros</SelectItem>
+                      </>
+                    ) : (
+                      <>
+                        <SelectItem value="pix">PIX</SelectItem>
+                        <SelectItem value="cartao_debito">Cartão Débito</SelectItem>
+                        <SelectItem value="cartao_credito">Cartão Crédito</SelectItem>
+                        <SelectItem value="transferencia">Transferência</SelectItem>
+                        <SelectItem value="outros">Outros</SelectItem>
+                      </>
+                    )
                   ) : (
-                    <>
-                      <SelectItem value="dinheiro">Saída do Caixa</SelectItem>
-                      <SelectItem value="sangria">Sangria (Caixa)</SelectItem>
-                      <SelectItem value="despesa">Despesa (Banco)</SelectItem>
-                      <SelectItem value="pix">Transferência PIX (Banco)</SelectItem>
-                      <SelectItem value="cartao_debito">Débito Automático (Banco)</SelectItem>
-                      <SelectItem value="outros">Outros</SelectItem>
-                    </>
+                    newEntry.source === 'caixa' ? (
+                      <>
+                        <SelectItem value="sangria">Sangria</SelectItem>
+                        <SelectItem value="troco">Troco</SelectItem>
+                        <SelectItem value="despesa">Despesa em Dinheiro</SelectItem>
+                        <SelectItem value="outros">Outros</SelectItem>
+                      </>
+                    ) : (
+                      <>
+                        <SelectItem value="despesa">Despesa</SelectItem>
+                        <SelectItem value="pix">Transferência PIX</SelectItem>
+                        <SelectItem value="cartao_debito">Débito Automático</SelectItem>
+                        <SelectItem value="cartao_credito">Pagamento Cartão</SelectItem>
+                        <SelectItem value="outros">Outros</SelectItem>
+                      </>
+                    )
                   )}
                 </SelectContent>
               </Select>
