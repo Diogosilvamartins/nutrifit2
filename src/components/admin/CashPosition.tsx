@@ -108,26 +108,51 @@ export default function CashPosition() {
           created_at: movement.created_at,
         })) || [];
 
-        // Compute totals from fetched movements to avoid RPC mismatches
+        // Compute totals from fetched movements and calculate cumulative balances
         const computedTotals = cashEntries.reduce(
           (acc, e) => {
-            if (e.type === 'entrada') acc.entries += e.amount;
-            if (e.type === 'saida') acc.exits += e.amount;
+            if (e.type === 'entrada') {
+              if (e.category === 'dinheiro') {
+                acc.cashEntries += e.amount;
+              } else if (['pix', 'cartao_debito', 'cartao_credito'].includes(e.category)) {
+                acc.bankEntries += e.amount;
+              }
+              acc.entries += e.amount;
+            }
+            if (e.type === 'saida') {
+              if (e.category === 'dinheiro' || e.category === 'sangria') {
+                acc.cashExits += e.amount;
+              } else if (['pix', 'cartao_debito', 'cartao_credito', 'despesa'].includes(e.category)) {
+                acc.bankExits += e.amount;
+              }
+              acc.exits += e.amount;
+            }
+            if (e.type === 'ajuste') {
+              if (e.category === 'saldo_caixa') {
+                acc.cashAdjust += e.amount;
+              } else if (e.category === 'saldo_banco') {
+                acc.bankAdjust += e.amount;
+              }
+            }
             return acc;
           },
-          { entries: 0, exits: 0 }
+          { entries: 0, exits: 0, cashEntries: 0, cashExits: 0, bankEntries: 0, bankExits: 0, cashAdjust: 0, bankAdjust: 0 }
         );
+
+        // Calculate cumulative balances
+        const cashBalance = computedTotals.cashEntries - computedTotals.cashExits + computedTotals.cashAdjust;
+        const bankBalance = computedTotals.bankEntries - computedTotals.bankExits + computedTotals.bankAdjust;
 
         setEntries(cashEntries);
         setSummary({
           opening_balance: Number(summary.opening_balance),
           total_entries: Number(computedTotals.entries),
           total_exits: Number(computedTotals.exits),
-          current_balance: Number(summary.current_balance),
-          sales_cash: Number(summary.sales_cash),
-          sales_pix: Number(summary.sales_pix),
-          expenses: Number(summary.expenses),
-          bank_balance: Number(summary.bank_balance),
+          current_balance: cashBalance,
+          sales_cash: Number(computedTotals.cashEntries),
+          sales_pix: Number(computedTotals.bankEntries),
+          expenses: Number(computedTotals.exits),
+          bank_balance: bankBalance,
         });
         
       } else {
@@ -164,26 +189,51 @@ export default function CashPosition() {
             created_at: movement.created_at,
           })) || [];
 
-          // Compute totals from fetched movements to ensure consistency
+          // Compute totals from fetched movements and calculate cumulative balances
           const computedTotals = cashEntries.reduce(
             (acc, e) => {
-              if (e.type === 'entrada') acc.entries += e.amount;
-              if (e.type === 'saida') acc.exits += e.amount;
+              if (e.type === 'entrada') {
+                if (e.category === 'dinheiro') {
+                  acc.cashEntries += e.amount;
+                } else if (['pix', 'cartao_debito', 'cartao_credito'].includes(e.category)) {
+                  acc.bankEntries += e.amount;
+                }
+                acc.entries += e.amount;
+              }
+              if (e.type === 'saida') {
+                if (e.category === 'dinheiro' || e.category === 'sangria') {
+                  acc.cashExits += e.amount;
+                } else if (['pix', 'cartao_debito', 'cartao_credito', 'despesa'].includes(e.category)) {
+                  acc.bankExits += e.amount;
+                }
+                acc.exits += e.amount;
+              }
+              if (e.type === 'ajuste') {
+                if (e.category === 'saldo_caixa') {
+                  acc.cashAdjust += e.amount;
+                } else if (e.category === 'saldo_banco') {
+                  acc.bankAdjust += e.amount;
+                }
+              }
               return acc;
             },
-            { entries: 0, exits: 0 }
+            { entries: 0, exits: 0, cashEntries: 0, cashExits: 0, bankEntries: 0, bankExits: 0, cashAdjust: 0, bankAdjust: 0 }
           );
+
+          // Calculate cumulative balances for the period
+          const cashBalance = computedTotals.cashEntries - computedTotals.cashExits + computedTotals.cashAdjust;
+          const bankBalance = computedTotals.bankEntries - computedTotals.bankExits + computedTotals.bankAdjust;
 
           setEntries(cashEntries);
           setSummary({
             opening_balance: 0,
             total_entries: Number(computedTotals.entries),
             total_exits: Number(computedTotals.exits),
-            current_balance: Number(periodData.accumulated_cash_balance),
-            sales_cash: Number(periodData.total_cash_entries),
-            sales_pix: Number(periodData.total_bank_entries),
-            expenses: Number(periodData.total_expenses),
-            bank_balance: Number(periodData.accumulated_bank_balance),
+            current_balance: cashBalance,
+            sales_cash: Number(computedTotals.cashEntries),
+            sales_pix: Number(computedTotals.bankEntries),
+            expenses: Number(computedTotals.exits),
+            bank_balance: bankBalance,
           });
         }
       }
@@ -585,14 +635,19 @@ export default function CashPosition() {
                 <SelectContent>
                   {newEntry.type === 'entrada' ? (
                     <>
-                      <SelectItem value="dinheiro">Dinheiro</SelectItem>
-                      <SelectItem value="pix">PIX</SelectItem>
+                      <SelectItem value="dinheiro">Dinheiro (Caixa)</SelectItem>
+                      <SelectItem value="pix">PIX (Banco)</SelectItem>
+                      <SelectItem value="cartao_debito">Cartão Débito (Banco)</SelectItem>
+                      <SelectItem value="cartao_credito">Cartão Crédito (Banco)</SelectItem>
                       <SelectItem value="outros">Outros</SelectItem>
                     </>
                   ) : (
                     <>
-                      <SelectItem value="despesa">Despesa</SelectItem>
-                      <SelectItem value="sangria">Sangria</SelectItem>
+                      <SelectItem value="dinheiro">Saída do Caixa</SelectItem>
+                      <SelectItem value="sangria">Sangria (Caixa)</SelectItem>
+                      <SelectItem value="despesa">Despesa (Banco)</SelectItem>
+                      <SelectItem value="pix">Transferência PIX (Banco)</SelectItem>
+                      <SelectItem value="cartao_debito">Débito Automático (Banco)</SelectItem>
                       <SelectItem value="outros">Outros</SelectItem>
                     </>
                   )}
