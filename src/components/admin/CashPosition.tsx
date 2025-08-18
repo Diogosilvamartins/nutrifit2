@@ -7,8 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Download, Calendar, TrendingUp, Settings } from "lucide-react";
+import { Download, Calendar, TrendingUp, Settings, Edit, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 // Função para formatar valores em reais
 import { formatCurrency } from "@/lib/utils";
@@ -19,6 +20,7 @@ interface CashEntry {
   amount: number;
   description: string;
   category: string;
+  source?: 'caixa' | 'banco'; // Campo para identificar origem
   date: string;
   created_at: string;
 }
@@ -58,6 +60,8 @@ export default function CashPosition() {
     source: 'caixa' as 'caixa' | 'banco', // Nova propriedade para identificar origem
     date: new Date().toISOString().split('T')[0],
   });
+  const [editingEntry, setEditingEntry] = useState<CashEntry | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
@@ -105,6 +109,7 @@ export default function CashPosition() {
           amount: Number(movement.amount),
           description: movement.description,
           category: movement.category,
+          source: getSourceFromCategory(movement.category), // Determinar origem pela categoria
           date: movement.date,
           created_at: movement.created_at,
         })) || [];
@@ -186,6 +191,7 @@ export default function CashPosition() {
             amount: Number(movement.amount),
             description: movement.description,
             category: movement.category,
+            source: getSourceFromCategory(movement.category), // Determinar origem pela categoria
             date: movement.date,
             created_at: movement.created_at,
           })) || [];
@@ -373,6 +379,12 @@ export default function CashPosition() {
     });
   };
 
+  // Função para determinar origem baseada na categoria
+  const getSourceFromCategory = (category: string): 'caixa' | 'banco' => {
+    const caixaCategories = ['dinheiro', 'venda', 'troco', 'sangria', 'saldo_caixa'];
+    return caixaCategories.includes(category) ? 'caixa' : 'banco';
+  };
+
   const getCategoryBadge = (category: string) => {
     const categoryConfig = {
       abertura: { label: "Abertura", variant: "secondary" as const },
@@ -394,6 +406,87 @@ export default function CashPosition() {
                   { label: category, variant: "secondary" as const };
     
     return <Badge variant={config.variant}>{config.label}</Badge>;
+  };
+
+  const editCashEntry = async () => {
+    if (!editingEntry || !editingEntry.description || editingEntry.amount <= 0) {
+      toast({
+        title: "Dados inválidos",
+        description: "Preencha todos os campos obrigatórios.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // Determinar a categoria baseada no tipo e origem
+      let finalCategory = editingEntry.category;
+      if (editingEntry.type === 'saida') {
+        if (editingEntry.source === 'caixa') {
+          finalCategory = editingEntry.category === 'sangria' ? 'sangria' : 'dinheiro';
+        } else {
+          finalCategory = editingEntry.category === 'despesa' ? 'despesa' : editingEntry.category;
+        }
+      } else if (editingEntry.type === 'entrada') {
+        if (editingEntry.source === 'caixa') {
+          finalCategory = editingEntry.category === 'venda' ? 'dinheiro' : editingEntry.category;
+        } else {
+          finalCategory = editingEntry.category;
+        }
+      }
+
+      const { error } = await supabase
+        .from('cash_movements')
+        .update({
+          type: editingEntry.type,
+          amount: editingEntry.amount,
+          description: editingEntry.description,
+          category: finalCategory,
+          date: editingEntry.date,
+        })
+        .eq('id', editingEntry.id);
+
+      if (error) throw error;
+
+      setEditingEntry(null);
+      setShowEditDialog(false);
+      fetchCashData();
+
+      toast({
+        title: "Movimentação atualizada!",
+        description: "A movimentação foi editada com sucesso."
+      });
+    } catch (error) {
+      console.error("Error updating cash entry:", error);
+      toast({
+        title: "Erro ao atualizar movimentação",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const deleteCashEntry = async (entryId: string) => {
+    try {
+      const { error } = await supabase
+        .from('cash_movements')
+        .delete()
+        .eq('id', entryId);
+
+      if (error) throw error;
+
+      fetchCashData();
+
+      toast({
+        title: "Movimentação excluída!",
+        description: "A movimentação foi removida com sucesso."
+      });
+    } catch (error) {
+      console.error("Error deleting cash entry:", error);
+      toast({
+        title: "Erro ao excluir movimentação",
+        variant: "destructive"
+      });
+    }
   };
 
   if (loading) {
@@ -762,7 +855,7 @@ export default function CashPosition() {
                         {new Date(entry.created_at).toLocaleTimeString('pt-BR', { 
                           hour: '2-digit', 
                           minute: '2-digit' 
-                        })}
+                        })} • {entry.source === 'caixa' ? '💵 Caixa' : '🏦 Banco'}
                       </p>
                     </div>
                   </div>
@@ -772,6 +865,187 @@ export default function CashPosition() {
                     <span className={`font-bold ${entry.type === 'entrada' ? 'text-green-600' : 'text-red-600'}`}>
                       {entry.type === 'entrada' ? '+' : '-'}{formatCurrency(entry.amount)}
                     </span>
+                    
+                    {/* Botões de ação apenas para movimentações manuais (não automáticas de vendas) */}
+                    {!entry.description.includes('Venda') && (
+                      <div className="flex gap-2">
+                        <Dialog open={showEditDialog && editingEntry?.id === entry.id} onOpenChange={(open) => {
+                          setShowEditDialog(open);
+                          if (!open) setEditingEntry(null);
+                        }}>
+                          <DialogTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => {
+                                setEditingEntry({
+                                  ...entry,
+                                  source: entry.source || getSourceFromCategory(entry.category)
+                                });
+                                setShowEditDialog(true);
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Editar Movimentação</DialogTitle>
+                            </DialogHeader>
+                            {editingEntry && (
+                              <div className="grid grid-cols-1 gap-4">
+                                <div>
+                                  <Label>Tipo</Label>
+                                  <Select 
+                                    value={editingEntry.type} 
+                                    onValueChange={(value: 'entrada' | 'saida') => 
+                                      setEditingEntry({ ...editingEntry, type: value, category: '' })
+                                    }
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="entrada">Entrada</SelectItem>
+                                      <SelectItem value="saida">Saída</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+
+                                <div>
+                                  <Label>Local</Label>
+                                  <Select 
+                                    value={editingEntry.source || 'caixa'} 
+                                    onValueChange={(value: 'caixa' | 'banco') => 
+                                      setEditingEntry({ ...editingEntry, source: value, category: '' })
+                                    }
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="caixa">Caixa (Dinheiro)</SelectItem>
+                                      <SelectItem value="banco">Banco (Digital)</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+
+                                <div>
+                                  <Label>Valor (R$)</Label>
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={editingEntry.amount}
+                                    onChange={(e) => setEditingEntry({ ...editingEntry, amount: parseFloat(e.target.value) || 0 })}
+                                  />
+                                </div>
+
+                                <div>
+                                  <Label>Categoria</Label>
+                                  <Select 
+                                    value={editingEntry.category} 
+                                    onValueChange={(value) => setEditingEntry({ ...editingEntry, category: value })}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Selecione..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {editingEntry.type === 'entrada' ? (
+                                        editingEntry.source === 'caixa' ? (
+                                          <>
+                                            <SelectItem value="venda">Venda em Dinheiro</SelectItem>
+                                            <SelectItem value="troco">Troco/Devolução</SelectItem>
+                                            <SelectItem value="outros">Outros</SelectItem>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <SelectItem value="pix">PIX</SelectItem>
+                                            <SelectItem value="cartao_debito">Cartão Débito</SelectItem>
+                                            <SelectItem value="cartao_credito">Cartão Crédito</SelectItem>
+                                            <SelectItem value="transferencia">Transferência</SelectItem>
+                                            <SelectItem value="outros">Outros</SelectItem>
+                                          </>
+                                        )
+                                      ) : (
+                                        editingEntry.source === 'caixa' ? (
+                                          <>
+                                            <SelectItem value="sangria">Sangria</SelectItem>
+                                            <SelectItem value="troco">Troco</SelectItem>
+                                            <SelectItem value="despesa">Despesa em Dinheiro</SelectItem>
+                                            <SelectItem value="outros">Outros</SelectItem>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <SelectItem value="despesa">Despesa</SelectItem>
+                                            <SelectItem value="pix">Transferência PIX</SelectItem>
+                                            <SelectItem value="cartao_debito">Débito Automático</SelectItem>
+                                            <SelectItem value="cartao_credito">Pagamento Cartão</SelectItem>
+                                            <SelectItem value="outros">Outros</SelectItem>
+                                          </>
+                                        )
+                                      )}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+
+                                <div>
+                                  <Label>Descrição</Label>
+                                  <Input
+                                    value={editingEntry.description}
+                                    onChange={(e) => setEditingEntry({ ...editingEntry, description: e.target.value })}
+                                    placeholder="Descrição da movimentação"
+                                  />
+                                </div>
+
+                                <div>
+                                  <Label>Data</Label>
+                                  <Input
+                                    type="date"
+                                    value={editingEntry.date}
+                                    onChange={(e) => setEditingEntry({ ...editingEntry, date: e.target.value })}
+                                  />
+                                </div>
+
+                                <div className="flex gap-2">
+                                  <Button onClick={editCashEntry} className="flex-1">
+                                    Salvar Alterações
+                                  </Button>
+                                  <Button variant="outline" onClick={() => {
+                                    setEditingEntry(null);
+                                    setShowEditDialog(false);
+                                  }} className="flex-1">
+                                    Cancelar
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+                          </DialogContent>
+                        </Dialog>
+
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir Movimentação</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja excluir esta movimentação? Esta ação não pode ser desfeita.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => deleteCashEntry(entry.id)}>
+                                Excluir
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
