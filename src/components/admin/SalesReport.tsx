@@ -292,7 +292,7 @@ export default function SalesReport() {
                       <div className="space-y-1">
                         {sale.products.map((product: any, index: number) => (
                           <div key={index} className="text-sm">
-                            {product.name} (x{product.quantity})
+                            {product.name} (x{product.quantity}) - {formatCurrency(product.price || 0)}
                           </div>
                         ))}
                       </div>
