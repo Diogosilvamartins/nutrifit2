@@ -118,17 +118,17 @@ export default function CashPosition() {
         const computedTotals = cashEntries.reduce(
           (acc, e) => {
             if (e.type === 'entrada') {
-              if (['dinheiro', 'venda', 'troco'].includes(e.category)) {
+              if (e.source === 'caixa') {
                 acc.cashEntries += e.amount;
-              } else if (['pix', 'cartao_debito', 'cartao_credito', 'transferencia'].includes(e.category)) {
+              } else {
                 acc.bankEntries += e.amount;
               }
               acc.entries += e.amount;
             }
             if (e.type === 'saida') {
-              if (['dinheiro', 'sangria', 'troco'].includes(e.category)) {
+              if (e.source === 'caixa') {
                 acc.cashExits += e.amount;
-              } else if (['pix', 'cartao_debito', 'cartao_credito', 'despesa', 'transferencia'].includes(e.category)) {
+              } else {
                 acc.bankExits += e.amount;
               }
               acc.exits += e.amount;
@@ -200,17 +200,17 @@ export default function CashPosition() {
           const computedTotals = cashEntries.reduce(
             (acc, e) => {
               if (e.type === 'entrada') {
-                if (['dinheiro', 'venda', 'troco'].includes(e.category)) {
+                if (e.source === 'caixa') {
                   acc.cashEntries += e.amount;
-                } else if (['pix', 'cartao_debito', 'cartao_credito', 'transferencia'].includes(e.category)) {
+                } else {
                   acc.bankEntries += e.amount;
                 }
                 acc.entries += e.amount;
               }
               if (e.type === 'saida') {
-                if (['dinheiro', 'sangria', 'troco'].includes(e.category)) {
+                if (e.source === 'caixa') {
                   acc.cashExits += e.amount;
-                } else if (['pix', 'cartao_debito', 'cartao_credito', 'despesa', 'transferencia'].includes(e.category)) {
+                } else {
                   acc.bankExits += e.amount;
                 }
                 acc.exits += e.amount;
