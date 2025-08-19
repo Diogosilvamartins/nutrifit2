@@ -44,6 +44,7 @@ export default function SalesReport() {
         .select(`
           id,
           created_at,
+          sale_date,
           customer_name,
           products,
           total_amount,
@@ -80,7 +81,7 @@ export default function SalesReport() {
 
       const formattedSales: SaleReport[] = salesData?.map(sale => ({
         id: sale.id,
-        date: format(new Date(sale.created_at), 'dd/MM/yyyy', { locale: ptBR }),
+        date: format(new Date(sale.sale_date || sale.created_at), 'dd/MM/yyyy', { locale: ptBR }),
         customer_name: sale.customer_name,
         products: Array.isArray(sale.products) ? sale.products : [],
         salesperson_name: sale.profiles?.full_name || 'Sem vendedor',

@@ -477,6 +477,7 @@ export type Database = {
           products: Json
           quote_number: string
           quote_type: string
+          sale_date: string | null
           salesperson_id: string | null
           shipping_cost: number | null
           shipping_type: string | null
@@ -505,6 +506,7 @@ export type Database = {
           products?: Json
           quote_number: string
           quote_type?: string
+          sale_date?: string | null
           salesperson_id?: string | null
           shipping_cost?: number | null
           shipping_type?: string | null
@@ -533,6 +535,7 @@ export type Database = {
           products?: Json
           quote_number?: string
           quote_type?: string
+          sale_date?: string | null
           salesperson_id?: string | null
           shipping_cost?: number | null
           shipping_type?: string | null
