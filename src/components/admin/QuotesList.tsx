@@ -424,7 +424,25 @@ export default function QuotesList() {
       return;
     }
 
-    const phone = quote.customer_phone.replace(/\D/g, "");
+    // Normalize phone number for WhatsApp
+    const cleanPhone = quote.customer_phone.replace(/\D/g, "");
+    let phone = cleanPhone;
+    
+    // Add country code if not present
+    if (!phone.startsWith('55') && phone.length >= 10) {
+      phone = `55${phone}`;
+    }
+    
+    // Validate phone length
+    if (phone.length < 12) {
+      toast({
+        title: "Telefone inválido",
+        description: "Número de telefone deve ter pelo menos 10 dígitos.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const message = `Olá ${quote.customer_name}! 
 
 ${quote.quote_type === "sale" ? "Recibo de Compra" : "Orçamento"} Nº: ${quote.quote_number}
@@ -440,9 +458,18 @@ ${quote.quote_type === "quote" && quote.valid_until ? `Válido até: ${new Date(
 Nutri & Fit Suplementos`;
 
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/55${phone}?text=${encodedMessage}`;
+    const whatsappUrl = `https://wa.me/${phone}?text=${encodedMessage}`;
     
-    window.open(whatsappUrl, '_blank');
+    console.log('Opening WhatsApp URL:', whatsappUrl);
+    
+    const newWindow = window.open(whatsappUrl, '_blank');
+    if (!newWindow) {
+      toast({
+        title: "Popup bloqueado",
+        description: "Permita popups para abrir o WhatsApp.",
+        variant: "destructive"
+      });
+    }
   };
 
   if (loading) {
