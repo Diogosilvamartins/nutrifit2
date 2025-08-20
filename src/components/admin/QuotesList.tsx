@@ -50,6 +50,7 @@ interface Quote {
   payment_method?: string;
   payment_status?: string;
   shipping_cost?: number;
+  sale_date?: string;
   created_at: string;
   updated_at: string;
 }
@@ -323,9 +324,13 @@ export default function QuotesList() {
           customer_email: updatedQuote.customer_email,
           customer_cpf: updatedQuote.customer_cpf,
           discount_amount: updatedQuote.discount_amount || 0,
+          subtotal: updatedQuote.subtotal,
+          total_amount: updatedQuote.total_amount,
+          products: updatedQuote.products,
           notes: updatedQuote.notes,
           valid_until: updatedQuote.valid_until,
           payment_method: updatedQuote.payment_method,
+          sale_date: updatedQuote.sale_date,
           updated_at: new Date().toISOString()
         })
         .eq('id', editingQuote.id);
