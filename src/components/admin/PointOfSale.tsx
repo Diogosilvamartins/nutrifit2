@@ -96,7 +96,7 @@ export default function PointOfSale() {
       const { data, error } = await supabase
         .from('profiles')
         .select('user_id, full_name, role')
-        .in('role', ['manager', 'user'])
+        .in('role', ['admin', 'manager', 'user'])
         .eq('is_active', true)
         .order('full_name');
       
