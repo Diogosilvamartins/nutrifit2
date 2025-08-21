@@ -398,14 +398,9 @@ export default function PointOfSale() {
     }
   };
 
-  const sendWhatsApp = () => {
+  const getWhatsAppUrl = (): string | null => {
     if (!quote.customer_phone || !quote.quote_number) {
-      toast({
-        title: "Dados necessários",
-        description: "Informe o telefone do cliente e salve o orçamento.",
-        variant: "destructive"
-      });
-      return;
+      return null;
     }
 
     // Normalize phone number for WhatsApp
@@ -419,34 +414,28 @@ export default function PointOfSale() {
     
     // Validate phone length
     if (phone.length < 12) {
+      return null;
+    }
+
+    const message = `Olá ${quote.customer_name}! \n\n${quote.quote_type === "sale" ? "Recibo de Compra" : "Orçamento"} Nº: ${quote.quote_number}\n\n${cart.map(item => `• ${item.product.name} - Qtd: ${item.quantity} - ${formatCurrency(item.product.price * item.quantity)}`).join('\n')}\n\nSubtotal: ${formatCurrency(quote.subtotal)}\n${quote.include_shipping ? `Taxa de Entrega: ${formatCurrency(quote.shipping_cost)}` : ''}\n${quote.discount_amount > 0 ? `Desconto: ${formatCurrency(quote.discount_amount)}` : ''}\nTotal: ${formatCurrency(quote.total_amount)}\n\n${quote.quote_type === "quote" && quote.valid_until ? `Válido até: ${new Date(quote.valid_until).toLocaleDateString('pt-BR')}` : ''}\n\nNutri & Fit Suplementos`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${phone}?text=${encodedMessage}`;
+    return whatsappUrl;
+  };
+
+  const sendWhatsApp = () => {
+    const whatsappUrl = getWhatsAppUrl();
+    if (!whatsappUrl) {
       toast({
-        title: "Telefone inválido",
-        description: "Número de telefone deve ter pelo menos 10 dígitos.",
+        title: "Dados necessários",
+        description: "Verifique o telefone e salve o orçamento.",
         variant: "destructive"
       });
       return;
     }
 
-    const message = `Olá ${quote.customer_name}! 
-
-${quote.quote_type === "sale" ? "Recibo de Compra" : "Orçamento"} Nº: ${quote.quote_number}
-
-${cart.map(item => `• ${item.product.name} - Qtd: ${item.quantity} - ${formatCurrency(item.product.price * item.quantity)}`).join('\n')}
-
-Subtotal: ${formatCurrency(quote.subtotal)}
-${quote.include_shipping ? `Taxa de Entrega: ${formatCurrency(quote.shipping_cost)}` : ''}
-${quote.discount_amount > 0 ? `Desconto: ${formatCurrency(quote.discount_amount)}` : ''}
-Total: ${formatCurrency(quote.total_amount)}
-
-${quote.quote_type === "quote" && quote.valid_until ? `Válido até: ${new Date(quote.valid_until).toLocaleDateString('pt-BR')}` : ''}
-
-Nutri & Fit Suplementos`;
-
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${phone}?text=${encodedMessage}`;
-    
     console.log('Opening WhatsApp URL:', whatsappUrl);
-    
     const newWindow = window.open(whatsappUrl, '_blank');
     if (!newWindow) {
       toast({
