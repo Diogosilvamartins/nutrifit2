@@ -415,13 +415,9 @@ export default function QuotesList() {
     }
   };
 
-  const sendWhatsApp = (quote: Quote) => {
+  const getWhatsAppUrl = (quote: Quote): string | null => {
     if (!quote.customer_phone) {
-      toast({
-        title: "Telefone não informado",
-        variant: "destructive"
-      });
-      return;
+      return null;
     }
 
     // Normalize phone number for WhatsApp
@@ -435,41 +431,14 @@ export default function QuotesList() {
     
     // Validate phone length
     if (phone.length < 12) {
-      toast({
-        title: "Telefone inválido",
-        description: "Número de telefone deve ter pelo menos 10 dígitos.",
-        variant: "destructive"
-      });
-      return;
+      return null;
     }
 
-    const message = `Olá ${quote.customer_name}! 
-
-${quote.quote_type === "sale" ? "Recibo de Compra" : "Orçamento"} Nº: ${quote.quote_number}
-
-${quote.products.map((item: any) => `• ${item.name} - Qtd: ${item.quantity} - ${formatCurrency(item.total)}`).join('\n')}
-
-Subtotal: ${formatCurrency(quote.subtotal)}
-${quote.discount_amount > 0 ? `Desconto: ${formatCurrency(quote.discount_amount)}` : ''}
-Total: ${formatCurrency(quote.total_amount)}
-
-${quote.quote_type === "quote" && quote.valid_until ? `Válido até: ${new Date(quote.valid_until).toLocaleDateString('pt-BR')}` : ''}
-
-Nutri & Fit Suplementos`;
+    const message = `Olá ${quote.customer_name}! \n\n${quote.quote_type === "sale" ? "Recibo de Compra" : "Orçamento"} Nº: ${quote.quote_number}\n\n${quote.products.map((item: any) => `• ${item.name} - Qtd: ${item.quantity} - ${formatCurrency(item.total)}`).join('\n')}\n\nSubtotal: ${formatCurrency(quote.subtotal)}\n${quote.discount_amount > 0 ? `Desconto: ${formatCurrency(quote.discount_amount)}` : ''}\nTotal: ${formatCurrency(quote.total_amount)}\n\n${quote.quote_type === "quote" && quote.valid_until ? `Válido até: ${new Date(quote.valid_until).toLocaleDateString('pt-BR')}` : ''}\n\nNutri & Fit Suplementos`;
 
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${phone}?text=${encodedMessage}`;
-    
-    console.log('Opening WhatsApp URL:', whatsappUrl);
-    
-    const newWindow = window.open(whatsappUrl, '_blank');
-    if (!newWindow) {
-      toast({
-        title: "Popup bloqueado",
-        description: "Permita popups para abrir o WhatsApp.",
-        variant: "destructive"
-      });
-    }
+    return whatsappUrl;
   };
 
   if (loading) {
@@ -690,11 +659,27 @@ Nutri & Fit Suplementos`;
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
+                                asChild
                                 size="sm"
                                 variant="outline"
-                                onClick={() => sendWhatsApp(quote)}
+                                disabled={!getWhatsAppUrl(quote)}
                               >
-                                <MessageCircle className="w-4 h-4" />
+                                <a 
+                                  href={getWhatsAppUrl(quote) || "#"} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => {
+                                    if (!getWhatsAppUrl(quote)) {
+                                      e.preventDefault();
+                                      toast({
+                                        title: "Telefone não informado",
+                                        variant: "destructive"
+                                      });
+                                    }
+                                  }}
+                                >
+                                  <MessageCircle className="w-4 h-4" />
+                                </a>
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>

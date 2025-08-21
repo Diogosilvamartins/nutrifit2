@@ -749,11 +749,27 @@ export default function PointOfSale() {
                         PDF
                       </Button>
                       <Button
-                        onClick={sendWhatsApp}
+                        asChild
                         variant="outline"
+                        disabled={!getWhatsAppUrl(quote)}
                       >
-                        <MessageCircle className="w-4 h-4 mr-2" />
-                        WhatsApp
+                        <a 
+                          href={getWhatsAppUrl(quote) || "#"} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          onClick={(e) => {
+                            if (!getWhatsAppUrl(quote)) {
+                              e.preventDefault();
+                              toast({
+                                title: "Telefone não informado",
+                                variant: "destructive"
+                              });
+                            }
+                          }}
+                        >
+                          <MessageCircle className="w-4 h-4 mr-2" />
+                          WhatsApp
+                        </a>
                       </Button>
                     </>
                   )}
