@@ -462,13 +462,14 @@ Nutri & Fit Suplementos`;
     
     console.log('Opening WhatsApp URL:', whatsappUrl);
     
-    const newWindow = window.open(whatsappUrl, '_blank');
+    const newWindow = window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
     if (!newWindow) {
+      // Fallback: open in same tab to bypass popup blockers
       toast({
         title: "Popup bloqueado",
-        description: "Permita popups para abrir o WhatsApp.",
-        variant: "destructive"
+        description: "Abrindo WhatsApp (wa.me) nesta aba. Você também pode permitir popups para este site.",
       });
+      window.location.href = whatsappUrl;
     }
   };
 
