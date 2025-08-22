@@ -751,14 +751,14 @@ export default function PointOfSale() {
                       <Button
                         asChild
                         variant="outline"
-                        disabled={!getWhatsAppUrl(quote)}
+                        disabled={!getWhatsAppUrl()}
                       >
                         <a 
-                          href={getWhatsAppUrl(quote) || "#"} 
+                          href={getWhatsAppUrl() || "#"} 
                           target="_blank" 
                           rel="noopener noreferrer"
                           onClick={(e) => {
-                            if (!getWhatsAppUrl(quote)) {
+                            if (!getWhatsAppUrl()) {
                               e.preventDefault();
                               toast({
                                 title: "Telefone não informado",
