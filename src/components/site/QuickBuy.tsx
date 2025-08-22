@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -84,8 +84,10 @@ export default function QuickBuy({ product, phone, pixKey, storeName }: QuickBuy
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Finalizar pedido</DialogTitle>
+          <DialogDescription>
+            Escolha como deseja finalizar o pedido.
+          </DialogDescription>
         </DialogHeader>
-
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
             {storeName}: selecione a forma de contato/pagamento para <span className="font-medium text-foreground">{product.name}</span> — {product.price}
