@@ -437,7 +437,33 @@ export default function QuotesList() {
     const message = `Olá ${quote.customer_name}! \n\n${quote.quote_type === "sale" ? "Recibo de Compra" : "Orçamento"} Nº: ${quote.quote_number}\n\n${quote.products.map((item: any) => `• ${item.name} - Qtd: ${item.quantity} - ${formatCurrency(item.total)}`).join('\n')}\n\nSubtotal: ${formatCurrency(quote.subtotal)}\n${quote.discount_amount > 0 ? `Desconto: ${formatCurrency(quote.discount_amount)}` : ''}\nTotal: ${formatCurrency(quote.total_amount)}\n\n${quote.quote_type === "quote" && quote.valid_until ? `Válido até: ${new Date(quote.valid_until).toLocaleDateString('pt-BR')}` : ''}\n\nNutri & Fit Suplementos`;
 
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${phone}?text=${encodedMessage}`;
+    const whatsappUrl = `whatsapp://send?phone=${phone}&text=${encodedMessage}`;
+    return whatsappUrl;
+  };
+
+  const getWhatsAppFallbackUrl = (quote: Quote): string | null => {
+    if (!quote.customer_phone) {
+      return null;
+    }
+
+    // Normalize phone number for WhatsApp
+    const cleanPhone = quote.customer_phone.replace(/\D/g, "");
+    let phone = cleanPhone;
+    
+    // Add country code if not present
+    if (!phone.startsWith('55') && phone.length >= 10) {
+      phone = `55${phone}`;
+    }
+    
+    // Validate phone length
+    if (phone.length < 12) {
+      return null;
+    }
+
+    const message = `Olá ${quote.customer_name}! \n\n${quote.quote_type === "sale" ? "Recibo de Compra" : "Orçamento"} Nº: ${quote.quote_number}\n\n${quote.products.map((item: any) => `• ${item.name} - Qtd: ${item.quantity} - ${formatCurrency(item.total)}`).join('\n')}\n\nSubtotal: ${formatCurrency(quote.subtotal)}\n${quote.discount_amount > 0 ? `Desconto: ${formatCurrency(quote.discount_amount)}` : ''}\nTotal: ${formatCurrency(quote.total_amount)}\n\n${quote.quote_type === "quote" && quote.valid_until ? `Válido até: ${new Date(quote.valid_until).toLocaleDateString('pt-BR')}` : ''}\n\nNutri & Fit Suplementos`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://web.whatsapp.com/send?phone=${phone}&text=${encodedMessage}`;
     return whatsappUrl;
   };
 
@@ -659,27 +685,26 @@ export default function QuotesList() {
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
-                                asChild
                                 size="sm"
                                 variant="outline"
                                 disabled={!getWhatsAppUrl(quote)}
+                                onClick={() => {
+                                  const appUrl = getWhatsAppUrl(quote);
+                                  const fallbackUrl = getWhatsAppFallbackUrl(quote);
+                                  if (appUrl && fallbackUrl) {
+                                    window.location.href = appUrl;
+                                    setTimeout(() => {
+                                      window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
+                                    }, 2000);
+                                  } else {
+                                    toast({
+                                      title: "Telefone não informado",
+                                      variant: "destructive"
+                                    });
+                                  }
+                                }}
                               >
-                                <a 
-                                  href={getWhatsAppUrl(quote) || "#"} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  onClick={(e) => {
-                                    if (!getWhatsAppUrl(quote)) {
-                                      e.preventDefault();
-                                      toast({
-                                        title: "Telefone não informado",
-                                        variant: "destructive"
-                                      });
-                                    }
-                                  }}
-                                >
-                                  <MessageCircle className="w-4 h-4" />
-                                </a>
+                                <MessageCircle className="w-4 h-4" />
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>

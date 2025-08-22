@@ -60,7 +60,15 @@ export default function QuickBuy({ product, phone, pixKey, storeName }: QuickBuy
     if (!normalized) return null;
     const msg = `Olá! Tenho interesse no produto: ${product.name} (${product.price}).\nLoja: ${storeName}.\nMeu CEP: ____. Pode confirmar disponibilidade e prazo?`;
     const encoded = encodeURIComponent(msg);
-    return `https://wa.me/${normalized}?text=${encoded}`;
+    return `whatsapp://send?phone=${normalized}&text=${encoded}`;
+  }, [phone, product.name, product.price, storeName]);
+
+  const waFallbackUrl = useMemo(() => {
+    const normalized = normalizeWhatsApp(phone);
+    if (!normalized) return null;
+    const msg = `Olá! Tenho interesse no produto: ${product.name} (${product.price}).\nLoja: ${storeName}.\nMeu CEP: ____. Pode confirmar disponibilidade e prazo?`;
+    const encoded = encodeURIComponent(msg);
+    return `https://web.whatsapp.com/send?phone=${normalized}&text=${encoded}`;
   }, [phone, product.name, product.price, storeName]);
 
   const isWhatsAppAvailable = waUrl !== null;
@@ -95,10 +103,21 @@ export default function QuickBuy({ product, phone, pixKey, storeName }: QuickBuy
 
           <div className="flex flex-col gap-3">
             {isWhatsAppAvailable ? (
-              <Button asChild variant="secondary" size="lg" aria-label="Abrir WhatsApp com mensagem do pedido">
-                <a href={waUrl} target="_blank" rel="noopener noreferrer" className="w-full">
-                  <Whatsapp className="mr-2" /> Pedir pelo WhatsApp
-                </a>
+              <Button 
+                variant="secondary" 
+                size="lg" 
+                aria-label="Abrir WhatsApp com mensagem do pedido"
+                className="w-full"
+                onClick={() => {
+                  // Tenta abrir o app do WhatsApp
+                  window.location.href = waUrl!;
+                  // Fallback para web após 2 segundos se o app não abrir
+                  setTimeout(() => {
+                    window.open(waFallbackUrl!, '_blank', 'noopener,noreferrer');
+                  }, 2000);
+                }}
+              >
+                <Whatsapp className="mr-2" /> Pedir pelo WhatsApp
               </Button>
             ) : (
               <div className="space-y-2">

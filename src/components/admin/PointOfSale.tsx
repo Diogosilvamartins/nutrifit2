@@ -420,30 +420,34 @@ export default function PointOfSale() {
     const message = `Olá ${quote.customer_name}! \n\n${quote.quote_type === "sale" ? "Recibo de Compra" : "Orçamento"} Nº: ${quote.quote_number}\n\n${cart.map(item => `• ${item.product.name} - Qtd: ${item.quantity} - ${formatCurrency(item.product.price * item.quantity)}`).join('\n')}\n\nSubtotal: ${formatCurrency(quote.subtotal)}\n${quote.include_shipping ? `Taxa de Entrega: ${formatCurrency(quote.shipping_cost)}` : ''}\n${quote.discount_amount > 0 ? `Desconto: ${formatCurrency(quote.discount_amount)}` : ''}\nTotal: ${formatCurrency(quote.total_amount)}\n\n${quote.quote_type === "quote" && quote.valid_until ? `Válido até: ${new Date(quote.valid_until).toLocaleDateString('pt-BR')}` : ''}\n\nNutri & Fit Suplementos`;
 
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${phone}?text=${encodedMessage}`;
+    const whatsappUrl = `whatsapp://send?phone=${phone}&text=${encodedMessage}`;
     return whatsappUrl;
   };
 
-  const sendWhatsApp = () => {
-    const whatsappUrl = getWhatsAppUrl();
-    if (!whatsappUrl) {
-      toast({
-        title: "Dados necessários",
-        description: "Verifique o telefone e salve o orçamento.",
-        variant: "destructive"
-      });
-      return;
+  const getWhatsAppFallbackUrl = (): string | null => {
+    if (!quote.customer_phone || !quote.quote_number) {
+      return null;
     }
 
-    console.log('Opening WhatsApp URL:', whatsappUrl);
-    const newWindow = window.open(whatsappUrl, '_blank');
-    if (!newWindow) {
-      toast({
-        title: "Popup bloqueado",
-        description: "Permita popups para abrir o WhatsApp.",
-        variant: "destructive"
-      });
+    // Normalize phone number for WhatsApp
+    const cleanPhone = quote.customer_phone.replace(/\D/g, "");
+    let phone = cleanPhone;
+    
+    // Add country code if not present
+    if (!phone.startsWith('55') && phone.length >= 10) {
+      phone = `55${phone}`;
     }
+    
+    // Validate phone length
+    if (phone.length < 12) {
+      return null;
+    }
+
+    const message = `Olá ${quote.customer_name}! \n\n${quote.quote_type === "sale" ? "Recibo de Compra" : "Orçamento"} Nº: ${quote.quote_number}\n\n${cart.map(item => `• ${item.product.name} - Qtd: ${item.quantity} - ${formatCurrency(item.product.price * item.quantity)}`).join('\n')}\n\nSubtotal: ${formatCurrency(quote.subtotal)}\n${quote.include_shipping ? `Taxa de Entrega: ${formatCurrency(quote.shipping_cost)}` : ''}\n${quote.discount_amount > 0 ? `Desconto: ${formatCurrency(quote.discount_amount)}` : ''}\nTotal: ${formatCurrency(quote.total_amount)}\n\n${quote.quote_type === "quote" && quote.valid_until ? `Válido até: ${new Date(quote.valid_until).toLocaleDateString('pt-BR')}` : ''}\n\nNutri & Fit Suplementos`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://web.whatsapp.com/send?phone=${phone}&text=${encodedMessage}`;
+    return whatsappUrl;
   };
 
   return (
@@ -749,27 +753,26 @@ export default function PointOfSale() {
                         PDF
                       </Button>
                       <Button
-                        asChild
                         variant="outline"
                         disabled={!getWhatsAppUrl()}
+                        onClick={() => {
+                          const appUrl = getWhatsAppUrl();
+                          const fallbackUrl = getWhatsAppFallbackUrl();
+                          if (appUrl && fallbackUrl) {
+                            window.location.href = appUrl;
+                            setTimeout(() => {
+                              window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
+                            }, 2000);
+                          } else {
+                            toast({
+                              title: "Telefone não informado",
+                              variant: "destructive"
+                            });
+                          }
+                        }}
                       >
-                        <a 
-                          href={getWhatsAppUrl() || "#"} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          onClick={(e) => {
-                            if (!getWhatsAppUrl()) {
-                              e.preventDefault();
-                              toast({
-                                title: "Telefone não informado",
-                                variant: "destructive"
-                              });
-                            }
-                          }}
-                        >
-                          <MessageCircle className="w-4 h-4 mr-2" />
-                          WhatsApp
-                        </a>
+                        <MessageCircle className="w-4 h-4 mr-2" />
+                        WhatsApp
                       </Button>
                     </>
                   )}
