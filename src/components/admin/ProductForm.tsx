@@ -262,6 +262,18 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
           </div>
         </form>
       </CardContent>
+      
+      <BarcodeScanner
+        isOpen={showScanner}
+        onClose={() => setShowScanner(false)}
+        onScan={(code) => {
+          setFormData(prev => ({ ...prev, name: code }));
+          toast({
+            title: "Código escaneado!",
+            description: `Código: ${code}`
+          });
+        }}
+      />
     </Card>
   );
 }
