@@ -1,13 +1,15 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, Settings, Shield, User } from "lucide-react";
+import { LogOut, Settings, Shield, User, Download } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "react-router-dom";
 import CartButton from "@/components/cart/CartButton";
 import logo from "@/assets/logo-nutri-fit-oficial.png";
+import { usePWA } from "@/hooks/usePWA";
 
 const Header = () => {
   const { user, profile, signOut } = useAuth();
+  const { isInstallable, installApp } = usePWA();
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -23,6 +25,19 @@ const Header = () => {
         </nav>
         <div className="flex items-center gap-2">
           <CartButton />
+          
+          {isInstallable && (
+            <Button 
+              onClick={installApp}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Instalar App</span>
+            </Button>
+          )}
+          
           {user ? (
             <div className="flex items-center gap-2">
               {profile && (

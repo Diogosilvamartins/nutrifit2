@@ -21,6 +21,7 @@ import SupplierManagement from "@/components/admin/SupplierManagement";
 import CommissionManagement from "@/components/admin/CommissionManagement";
 import SalesReport from "@/components/admin/SalesReport";
 import { DownloadImage } from "@/components/ui/download-image";
+import { WhatsAppTemplates } from "@/components/templates/WhatsAppTemplates";
 
 interface Product {
   id: string;
@@ -140,7 +141,7 @@ const Admin = () => {
           <TabsTrigger value="pedidos">Pedidos</TabsTrigger>
           <TabsTrigger value="usuarios">Usuários</TabsTrigger>
           <TabsTrigger value="sistema">Sistema</TabsTrigger>
-          <TabsTrigger value="vendas-relatorio">Vendas</TabsTrigger>
+          <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pdv" className="mt-6">
@@ -238,6 +239,10 @@ const Admin = () => {
 
         <TabsContent value="vendas-relatorio" className="mt-6">
           <SalesReport />
+        </TabsContent>
+
+        <TabsContent value="whatsapp" className="mt-6">
+          <WhatsAppTemplates />
         </TabsContent>
         
         <TabsContent value="relatorios" className="mt-6">

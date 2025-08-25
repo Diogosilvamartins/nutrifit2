@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { QrCode } from "lucide-react";
+import { BarcodeScanner } from "@/components/scanner/BarcodeScanner";
 
 interface Product {
   id?: string;
@@ -35,6 +37,7 @@ interface ProductFormProps {
 export default function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) {
   const [loading, setLoading] = useState(false);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [showScanner, setShowScanner] = useState(false);
   const [formData, setFormData] = useState({
     name: product?.name || "",
     price: product?.price || 0,
@@ -157,12 +160,24 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="name">Nome do Produto</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-            />
+            <div className="flex gap-2">
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => setShowScanner(true)}
+                title="Escanear código de barras"
+              >
+                <QrCode className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
           
           <div>
