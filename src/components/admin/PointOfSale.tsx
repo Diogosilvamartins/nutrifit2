@@ -331,10 +331,8 @@ export default function PointOfSale() {
         description: `Número: ${quoteNumber}`
       });
 
-      // If it's a sale, clear the cart and reset form for next sale
-      if (type === "sale") {
-        clearCart();
-      }
+      // Clear the cart and reset form for next quote/sale
+      clearCart();
 
       return data;
     } catch (error) {
