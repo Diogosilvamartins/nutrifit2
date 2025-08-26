@@ -897,6 +897,18 @@ export type Database = {
         }
         Returns: string
       }
+      get_public_products: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string
+          description: string
+          id: string
+          image_url: string
+          name: string
+          price: number
+          updated_at: string
+        }[]
+      }
       get_system_health: {
         Args: Record<PropertyKey, never>
         Returns: Json

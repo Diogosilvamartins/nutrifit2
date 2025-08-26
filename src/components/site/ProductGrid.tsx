@@ -55,9 +55,9 @@ const ProductGrid = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
+        // Use secure public function that only returns non-sensitive product data
         const { data, error } = await supabase
-          .from('products')
-          .select('*')
+          .rpc('get_public_products')
           .order('created_at', { ascending: false })
           .limit(6);
         
