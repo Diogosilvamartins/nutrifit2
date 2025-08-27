@@ -79,12 +79,13 @@ const ProductGrid = () => {
 
   const handleAddToCart = async (product: Product) => {
     try {
-      await addToCart({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image_url: product.image_url
-      });
+        await addToCart({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          image_url: product.image_url || "",
+          created_at: new Date().toISOString()
+        } as any);
       
       // Enhanced toast notification
       toast({

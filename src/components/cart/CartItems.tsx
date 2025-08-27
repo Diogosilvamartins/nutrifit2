@@ -28,20 +28,20 @@ const CartItems = () => {
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-auto space-y-4 mt-6">
         {items.map((item) => (
-          <Card key={item.id}>
+          <Card key={item.product.id}>
             <CardContent className="p-4">
               <div className="flex items-center space-x-3">
-                {item.image_url && (
+                {item.product.image_url && (
                   <img 
-                    src={item.image_url} 
-                    alt={item.name}
+                    src={item.product.image_url} 
+                    alt={item.product.name}
                     className="w-16 h-16 object-cover rounded"
                   />
                 )}
                 <div className="flex-1">
-                  <h4 className="font-medium text-sm">{item.name}</h4>
+                  <h4 className="font-medium text-sm">{item.product.name}</h4>
                   <p className="text-primary font-semibold">
-                    {formatCurrency(item.price)}
+                    {formatCurrency(item.product.price)}
                   </p>
                   <div className="flex items-center space-x-2 mt-2">
                     <Button
