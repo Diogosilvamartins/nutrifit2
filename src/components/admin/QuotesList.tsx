@@ -842,18 +842,20 @@ export default function QuotesList() {
       {/* Edit Quote Modal */}
       {editingQuote && (
         <Dialog open={!!editingQuote} onOpenChange={() => setEditingQuote(null)}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+            <DialogHeader className="flex-shrink-0">
               <DialogTitle>
                 Editar {editingQuote.quote_type === "sale" ? "Venda" : "Orçamento"} {editingQuote.quote_number}
               </DialogTitle>
             </DialogHeader>
-            <EditQuoteForm 
-              quote={editingQuote}
-              onSave={handleUpdateQuote}
-              onCancel={() => setEditingQuote(null)}
-              isLoading={isLoading}
-            />
+            <div className="flex-1 overflow-y-auto px-1">
+              <EditQuoteForm 
+                quote={editingQuote}
+                onSave={handleUpdateQuote}
+                onCancel={() => setEditingQuote(null)}
+                isLoading={isLoading}
+              />
+            </div>
           </DialogContent>
         </Dialog>
       )}
