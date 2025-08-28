@@ -14,10 +14,10 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
-        <a href="#" className="flex items-center gap-2" aria-label="Nutri & Fit Suplemento Nutricional - página inicial">
+        <Link to="/" className="flex items-center gap-2" aria-label="Nutri & Fit Suplemento Nutricional - página inicial">
           <span className="font-display text-2xl tracking-tight">Nutri & Fit</span>
           <span className="sr-only">Nutri & Fit Suplemento Nutricional</span>
-        </a>
+        </Link>
         <nav className="hidden gap-6 md:flex" aria-label="Navegação principal">
           <a href="#produtos" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Produtos</a>
           <a href="#ofertas" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Ofertas</a>
