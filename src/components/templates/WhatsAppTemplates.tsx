@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Plus, Edit, Trash2, Copy } from "lucide-react";
+import { MessageSquare, Plus, Edit, Trash2, Copy, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface WhatsAppTemplate {
   id: string;
@@ -15,36 +16,18 @@ interface WhatsAppTemplate {
   message: string;
   variables: string[];
   category: string;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  created_by?: string;
 }
 
-const DEFAULT_TEMPLATES: WhatsAppTemplate[] = [
-  {
-    id: "1",
-    name: "Orçamento Aprovado",
-    message: "Olá {nome}! Seu orçamento #{numero} no valor de R$ {valor} foi aprovado! Quando podemos agendar a entrega? 📦✨",
-    variables: ["nome", "numero", "valor"],
-    category: "vendas"
-  },
-  {
-    id: "2", 
-    name: "Follow-up Cliente",
-    message: "Oi {nome}! Como você está? Vi que você teve interesse nos nossos suplementos. Posso te ajudar com alguma dúvida? 💪",
-    variables: ["nome"],
-    category: "relacionamento"
-  },
-  {
-    id: "3",
-    name: "Produto em Estoque",
-    message: "🎉 Boa notícia {nome}! O produto {produto} que você estava procurando acabou de chegar. Quer garantir o seu?",
-    variables: ["nome", "produto"],
-    category: "estoque"
-  }
-];
-
 export const WhatsAppTemplates = () => {
-  const [templates, setTemplates] = useState<WhatsAppTemplate[]>(DEFAULT_TEMPLATES);
+  const [templates, setTemplates] = useState<WhatsAppTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<WhatsAppTemplate | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [editForm, setEditForm] = useState({
     name: "",
     message: "",
@@ -53,42 +36,114 @@ export const WhatsAppTemplates = () => {
   });
   const { toast } = useToast();
 
+  useEffect(() => {
+    fetchTemplates();
+  }, []);
+
+  const fetchTemplates = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('whatsapp_templates')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: true });
+      
+      if (error) throw error;
+      
+      // Convert variables from JSONB to string array
+      const formattedTemplates = (data || []).map(template => ({
+        ...template,
+        variables: Array.isArray(template.variables) 
+          ? (template.variables as string[])
+          : []
+      })) as WhatsAppTemplate[];
+      
+      setTemplates(formattedTemplates);
+    } catch (error) {
+      console.error("Error fetching templates:", error);
+      toast({
+        title: "Erro ao carregar templates",
+        description: "Não foi possível carregar os templates.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const extractVariables = (message: string): string[] => {
     const matches = message.match(/\{([^}]+)\}/g);
     return matches ? matches.map(match => match.slice(1, -1)) : [];
   };
 
-  const handleSaveTemplate = () => {
-    const variables = extractVariables(editForm.message);
-    
-    if (selectedTemplate) {
-      // Edit existing
-      setTemplates(prev => prev.map(t => 
-        t.id === selectedTemplate.id 
-          ? { ...t, ...editForm, variables }
-          : t
-      ));
+  const handleSaveTemplate = async () => {
+    if (!editForm.name.trim() || !editForm.message.trim() || !editForm.category.trim()) {
       toast({
-        title: "Template atualizado!",
-        description: "As alterações foram salvas com sucesso."
+        title: "Campos obrigatórios",
+        description: "Preencha nome, mensagem e categoria.",
+        variant: "destructive"
       });
-    } else {
-      // Add new
-      const newTemplate: WhatsAppTemplate = {
-        id: Date.now().toString(),
-        ...editForm,
-        variables
-      };
-      setTemplates(prev => [...prev, newTemplate]);
-      toast({
-        title: "Template criado!",
-        description: "Novo template adicionado com sucesso."
-      });
+      return;
     }
 
-    setIsEditing(false);
-    setSelectedTemplate(null);
-    setEditForm({ name: "", message: "", category: "", variables: [] });
+    setSaving(true);
+    const variables = extractVariables(editForm.message);
+    
+    try {
+      if (selectedTemplate) {
+        // Edit existing
+        const { error } = await supabase
+          .from('whatsapp_templates')
+          .update({
+            name: editForm.name,
+            message: editForm.message,
+            category: editForm.category,
+            variables: variables,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', selectedTemplate.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Template atualizado!",
+          description: "As alterações foram salvas com sucesso."
+        });
+      } else {
+        // Add new
+        const { error } = await supabase
+          .from('whatsapp_templates')
+          .insert([{
+            name: editForm.name,
+            message: editForm.message,
+            category: editForm.category,
+            variables: variables,
+            created_by: (await supabase.auth.getUser()).data.user?.id
+          }]);
+
+        if (error) throw error;
+
+        toast({
+          title: "Template criado!",
+          description: "Novo template adicionado com sucesso."
+        });
+      }
+
+      await fetchTemplates();
+      setIsEditing(false);
+      setSelectedTemplate(null);
+      setEditForm({ name: "", message: "", category: "", variables: [] });
+    } catch (error) {
+      console.error("Error saving template:", error);
+      toast({
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar o template.",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleEditTemplate = (template: WhatsAppTemplate) => {
@@ -102,12 +157,28 @@ export const WhatsAppTemplates = () => {
     setIsEditing(true);
   };
 
-  const handleDeleteTemplate = (id: string) => {
-    setTemplates(prev => prev.filter(t => t.id !== id));
-    toast({
-      title: "Template excluído",
-      description: "Template removido com sucesso."
-    });
+  const handleDeleteTemplate = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('whatsapp_templates')
+        .update({ is_active: false })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      await fetchTemplates();
+      toast({
+        title: "Template excluído",
+        description: "Template removido com sucesso."
+      });
+    } catch (error) {
+      console.error("Error deleting template:", error);
+      toast({
+        title: "Erro ao excluir",
+        description: "Não foi possível excluir o template.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleCopyTemplate = (message: string) => {
@@ -139,7 +210,13 @@ export const WhatsAppTemplates = () => {
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin mr-2" />
+          <span>Carregando templates...</span>
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {templates.map((template) => (
           <Card key={template.id} className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
@@ -193,7 +270,8 @@ export const WhatsAppTemplates = () => {
             </CardContent>
           </Card>
         ))}
-      </div>
+        </div>
+      )}
 
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
         <DialogContent className="sm:max-w-lg">
@@ -253,8 +331,19 @@ export const WhatsAppTemplates = () => {
             )}
 
             <div className="flex gap-2 pt-4">
-              <Button onClick={handleSaveTemplate} className="flex-1">
-                {selectedTemplate ? "Atualizar" : "Criar"} Template
+              <Button 
+                onClick={handleSaveTemplate} 
+                className="flex-1" 
+                disabled={saving}
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Salvando...
+                  </>
+                ) : (
+                  selectedTemplate ? "Atualizar Template" : "Criar Template"
+                )}
               </Button>
               <Button 
                 variant="outline" 
