@@ -50,17 +50,17 @@ const CartItems = () => {
                       className="h-8 w-8"
                       onClick={async () => {
                         try {
-                          setUpdatingItem(item.id);
-                          await updateQuantity(item.id, item.quantity - 1);
+                           setUpdatingItem(item.product.id);
+                           await updateQuantity(item.product.id, item.quantity - 1);
                         } catch (error) {
                           // Error handling is in useCart hook
                         } finally {
                           setUpdatingItem(null);
                         }
                       }}
-                      disabled={updatingItem === item.id}
+                       disabled={updatingItem === item.product.id}
                     >
-                      {updatingItem === item.id ? <LoadingSpinner size="sm" /> : <Minus className="h-3 w-3" />}
+                      {updatingItem === item.product.id ? <LoadingSpinner size="sm" /> : <Minus className="h-3 w-3" />}
                     </Button>
                     <span className="w-8 text-center text-sm">{item.quantity}</span>
                     <Button
@@ -69,23 +69,23 @@ const CartItems = () => {
                       className="h-8 w-8"
                       onClick={async () => {
                         try {
-                          setUpdatingItem(item.id);
-                          await updateQuantity(item.id, item.quantity + 1);
+                           setUpdatingItem(item.product.id);
+                           await updateQuantity(item.product.id, item.quantity + 1);
                         } catch (error) {
                           // Error handling is in useCart hook
                         } finally {
                           setUpdatingItem(null);
                         }
                       }}
-                      disabled={updatingItem === item.id}
+                      disabled={updatingItem === item.product.id}
                     >
-                      {updatingItem === item.id ? <LoadingSpinner size="sm" /> : <Plus className="h-3 w-3" />}
+                      {updatingItem === item.product.id ? <LoadingSpinner size="sm" /> : <Plus className="h-3 w-3" />}
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-destructive hover:text-destructive-foreground hover:bg-destructive"
-                      onClick={() => removeFromCart(item.id)}
+                      onClick={() => removeFromCart(item.product.id)}
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>

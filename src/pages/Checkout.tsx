@@ -362,17 +362,17 @@ const Checkout = () => {
           <CardContent>
             <div className="space-y-4">
               {items.map((item) => (
-                <div key={item.id} className="flex justify-between items-center">
-                  <div>
-                    <p className="font-medium">{item.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Qtd: {item.quantity} x {formatCurrency(item.price)}
-                    </p>
-                  </div>
-                  <p className="font-semibold">
-                    {formatCurrency(item.price * item.quantity)}
-                  </p>
-                </div>
+                 <div key={item.product.id} className="flex justify-between items-center">
+                   <div>
+                     <p className="font-medium">{item.product.name}</p>
+                     <p className="text-sm text-muted-foreground">
+                       Qtd: {item.quantity} x {formatCurrency(item.product.price)}
+                     </p>
+                   </div>
+                   <p className="font-semibold">
+                     {formatCurrency(item.product.price * item.quantity)}
+                   </p>
+                 </div>
               ))}
               
               <Separator />

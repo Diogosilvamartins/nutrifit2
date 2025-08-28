@@ -50,7 +50,10 @@ export default function PointOfSaleRefactored() {
         .order('full_name');
       
       if (error) throw error;
-      setSalespeople(data || []);
+      setSalespeople((data || []).map(item => ({
+        ...item,
+        role: item.role as 'admin' | 'manager' | 'user'
+      })) as Profile[]);
     } catch (error) {
       console.error("Error fetching salespeople:", error);
     }
@@ -183,7 +186,12 @@ export default function PointOfSaleRefactored() {
             email: quote.customer_email,
             cpf: quote.customer_cpf
           }}
-          onCustomerChange={(data) => updateQuote(data)}
+          onCustomerChange={(data) => updateQuote({
+            customer_name: data.name || quote.customer_name,
+            customer_phone: data.phone || quote.customer_phone,
+            customer_email: data.email || quote.customer_email,
+            customer_cpf: data.cpf || quote.customer_cpf
+          })}
           salespeople={salespeople}
           selectedSalesperson={quote.salesperson_id}
           onSalespersonChange={(salespersonId) => updateQuote({ salesperson_id: salespersonId })}
