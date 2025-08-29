@@ -1,9 +1,8 @@
-const CACHE_NAME = 'nutrifit-v1';
+const CACHE_NAME = 'nutrifit-v2';
 const STATIC_CACHE = [
   '/',
-  '/admin',
-  '/auth',
-  '/manifest.json'
+  '/manifest.json',
+  '/favicon.ico'
 ];
 
 // Install event
@@ -32,18 +31,46 @@ self.addEventListener('activate', (event) => {
 
 // Fetch event
 self.addEventListener('fetch', (event) => {
-  // Skip cross-origin requests
-  if (!event.request.url.startsWith(self.location.origin)) {
+  const reqUrl = new URL(event.request.url);
+  // Handle only same-origin requests
+  if (reqUrl.origin !== self.location.origin) return;
+
+  // Network-first for navigation requests to avoid stale app shell
+  if (event.request.mode === 'navigate') {
+    event.respondWith((async () => {
+      try {
+        const networkResponse = await fetch(event.request);
+        const cache = await caches.open(CACHE_NAME);
+        cache.put(event.request, networkResponse.clone());
+        return networkResponse;
+      } catch (_) {
+        const cached = await caches.match(event.request);
+        return cached || caches.match('/');
+      }
+    })());
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
-      })
-  );
+  // Cache-first with background revalidation for other requests
+  event.respondWith((async () => {
+    const cached = await caches.match(event.request);
+    if (cached) {
+      // Revalidate in background
+      fetch(event.request).then(async (networkResponse) => {
+        try {
+          const cache = await caches.open(CACHE_NAME);
+          cache.put(event.request, networkResponse.clone());
+        } catch {}
+      }).catch(() => {});
+      return cached;
+    }
+    try {
+      const networkResponse = await fetch(event.request);
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(event.request, networkResponse.clone());
+      return networkResponse;
+    } catch (_) {
+      return caches.match('/');
+    }
+  })());
 });
