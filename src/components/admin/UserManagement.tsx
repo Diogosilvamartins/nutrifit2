@@ -30,17 +30,7 @@ const UserManagement = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const { hasPermission, isAdmin } = useAuth();
-
-  // Check if user has permission to manage users
-  if (!isAdmin()) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <p className="text-muted-foreground">Você não tem permissão para acessar esta funcionalidade.</p>
-        </CardContent>
-      </Card>
-    );
-  }
+  const hasAccess = isAdmin();
 
   const fetchUsers = async () => {
     try {
@@ -67,8 +57,20 @@ const UserManagement = () => {
   };
 
   useEffect(() => {
+    if (!hasAccess) return;
     fetchUsers();
-  }, []);
+  }, [hasAccess]);
+
+  // Block non-admin users after hooks to keep hooks order consistent
+  if (!hasAccess) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <p className="text-muted-foreground">Você não tem permissão para acessar esta funcionalidade.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const handleUpdateUser = async (userId: string, updates: Partial<UserProfile>) => {
     try {
