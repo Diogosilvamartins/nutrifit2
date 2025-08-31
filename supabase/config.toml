@@ -2,3 +2,6 @@ project_id = "zkxkbghzlfadkpdkctkx"
 
 [functions.correios-frete]
 verify_jwt = false
+
+[functions.daily-backup]
+verify_jwt = true

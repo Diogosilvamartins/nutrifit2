@@ -51,8 +51,13 @@ serve(async (req) => {
     // Por enquanto, vamos usar uma lógica baseada na distância estimada por CEP
     const frete = await calcularFreteSimulado(cepOrigem, cepDestino, peso, servico);
 
-    // Log da consulta para auditoria
-    await supabaseClient
+    // Log da consulta para auditoria usando service role para segurança
+    const serviceSupabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    );
+    
+    await serviceSupabase
       .from('audit_logs')
       .insert({
         table_name: 'shipping',
