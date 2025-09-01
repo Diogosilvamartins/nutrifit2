@@ -22,6 +22,7 @@ import CommissionManagement from "@/components/admin/CommissionManagement";
 import SalesReport from "@/components/admin/SalesReport";
 import { DownloadImage } from "@/components/ui/download-image";
 import { WhatsAppTemplates } from "@/components/templates/WhatsAppTemplates";
+import { AccountingModule } from "@/components/admin/accounting/AccountingModule";
 
 interface Product {
   id: string;
@@ -133,6 +134,7 @@ const Admin = () => {
           <TabsTrigger value="pdv">PDV</TabsTrigger>
           <TabsTrigger value="orcamentos">Orçamentos</TabsTrigger>
           <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+          <TabsTrigger value="contabilidade">Contabilidade</TabsTrigger>
           <TabsTrigger value="comissoes">Comissões</TabsTrigger>
           <TabsTrigger value="clientes">Clientes</TabsTrigger>
           <TabsTrigger value="produtos">Produtos</TabsTrigger>
@@ -153,6 +155,10 @@ const Admin = () => {
             <FinancialDashboard />
             <CashPosition />
           </div>
+        </TabsContent>
+
+        <TabsContent value="contabilidade" className="mt-6">
+          <AccountingModule />
         </TabsContent>
 
         <TabsContent value="orcamentos" className="mt-6">

@@ -14,6 +14,96 @@ export type Database = {
   }
   public: {
     Tables: {
+      accounting_entries: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string
+          entry_date: string
+          entry_number: string
+          entry_type: string
+          id: string
+          reference_id: string | null
+          reference_type: string | null
+          status: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description: string
+          entry_date: string
+          entry_number: string
+          entry_type: string
+          id?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          entry_date?: string
+          entry_number?: string
+          entry_type?: string
+          id?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      accounting_entry_items: {
+        Row: {
+          account_id: string
+          created_at: string
+          credit_amount: number
+          debit_amount: number
+          description: string | null
+          entry_id: string
+          id: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          credit_amount?: number
+          debit_amount?: number
+          description?: string | null
+          entry_id: string
+          id?: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          credit_amount?: number
+          debit_amount?: number
+          description?: string | null
+          entry_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounting_entry_items_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "chart_of_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounting_entry_items_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "accounting_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           created_at: string
@@ -53,6 +143,66 @@ export type Database = {
         }
         Relationships: []
       }
+      budgets: {
+        Row: {
+          account_id: string
+          actual_amount: number
+          budget_month: number | null
+          budget_year: number
+          budgeted_amount: number
+          cost_center_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          updated_at: string
+          variance_amount: number | null
+          variance_percentage: number | null
+        }
+        Insert: {
+          account_id: string
+          actual_amount?: number
+          budget_month?: number | null
+          budget_year: number
+          budgeted_amount?: number
+          cost_center_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          updated_at?: string
+          variance_amount?: number | null
+          variance_percentage?: number | null
+        }
+        Update: {
+          account_id?: string
+          actual_amount?: number
+          budget_month?: number | null
+          budget_year?: number
+          budgeted_amount?: number
+          cost_center_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          updated_at?: string
+          variance_amount?: number | null
+          variance_percentage?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budgets_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "chart_of_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budgets_cost_center_id_fkey"
+            columns: ["cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cash_movements: {
         Row: {
           amount: number
@@ -91,6 +241,53 @@ export type Database = {
           type?: string
         }
         Relationships: []
+      }
+      chart_of_accounts: {
+        Row: {
+          account_subtype: string
+          account_type: string
+          code: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          name: string
+          parent_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_subtype: string
+          account_type: string
+          code: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          parent_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_subtype?: string
+          account_type?: string
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          parent_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chart_of_accounts_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "chart_of_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       commission_records: {
         Row: {
@@ -202,6 +399,39 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      cost_centers: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       customers: {
         Row: {
@@ -882,6 +1112,10 @@ export type Database = {
       }
       format_cpf: {
         Args: { cpf_input: string }
+        Returns: string
+      }
+      generate_entry_number: {
+        Args: Record<PropertyKey, never>
         Returns: string
       }
       generate_quote_number: {
