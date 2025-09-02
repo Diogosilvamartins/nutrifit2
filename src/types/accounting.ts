@@ -2,8 +2,8 @@ export interface ChartOfAccount {
   id: string;
   code: string;
   name: string;
-  account_type: 'ativo' | 'passivo' | 'patrimonio_liquido' | 'receita' | 'despesa' | 'custo';
-  account_subtype: 'ativo_circulante' | 'ativo_nao_circulante' | 'passivo_circulante' | 'passivo_nao_circulante' | 'patrimonio_liquido' | 'receita_operacional' | 'receita_nao_operacional' | 'despesa_operacional' | 'despesa_nao_operacional' | 'custo_fixo' | 'custo_variavel';
+  account_type: string;
+  account_subtype: string;
   parent_id?: string;
   is_active: boolean;
   created_at: string;
@@ -17,8 +17,8 @@ export interface AccountingEntry {
   entry_date: string;
   description: string;
   total_amount: number;
-  status: 'draft' | 'posted' | 'canceled';
-  entry_type: 'manual' | 'automatic' | 'adjustment';
+  status: string;
+  entry_type: string;
   reference_type?: string;
   reference_id?: string;
   created_at: string;

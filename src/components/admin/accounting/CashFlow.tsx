@@ -106,7 +106,7 @@ export const CashFlow = () => {
               <PopoverTrigger asChild>
                 <Button variant="outline" className="flex items-center gap-2">
                   <CalendarIcon className="h-4 w-4" />
-                  {format(selectedDate, "MMMM yyyy", { locale: { localize: { month: (n) => ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'][n] } } })}
+                  {format(selectedDate, "MM/yyyy")}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
