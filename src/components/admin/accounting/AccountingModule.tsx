@@ -8,6 +8,7 @@ import { BalanceSheet } from './BalanceSheet';
 import { IncomeStatement } from './IncomeStatement';
 import { CashFlow } from './CashFlow';
 import { FinancialRatios } from './FinancialRatios';
+import { PurchaseEntries } from '../PurchaseEntries';
 
 export const AccountingModule = () => {
   const [activeTab, setActiveTab] = useState('entries');
@@ -20,10 +21,14 @@ export const AccountingModule = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="entries" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
             Lançamentos
+          </TabsTrigger>
+          <TabsTrigger value="purchases" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Compras
           </TabsTrigger>
           <TabsTrigger value="accounts" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
@@ -49,6 +54,10 @@ export const AccountingModule = () => {
 
         <TabsContent value="entries" className="space-y-4">
           <AccountingEntries />
+        </TabsContent>
+
+        <TabsContent value="purchases" className="space-y-4">
+          <PurchaseEntries />
         </TabsContent>
 
         <TabsContent value="accounts" className="space-y-4">
