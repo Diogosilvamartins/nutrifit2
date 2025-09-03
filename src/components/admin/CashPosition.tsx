@@ -5,11 +5,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Download, Calendar, TrendingUp, Settings, Edit, Trash2 } from "lucide-react";
+import { Download, Calendar, TrendingUp, Settings, Edit, Trash2, CalendarIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 // Função para formatar valores em reais
 import { formatCurrency } from "@/lib/utils";
@@ -589,32 +594,95 @@ export default function CashPosition() {
           {viewMode === 'daily' ? (
             <div className="flex flex-col gap-2">
               <Label className="text-sm font-medium">Data</Label>
-              <Input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-40 h-9"
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-40 h-9 justify-start text-left font-normal",
+                      !selectedDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {selectedDate ? format(new Date(selectedDate), "dd/MM/yyyy", { locale: ptBR }) : "Selecionar"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={selectedDate ? new Date(selectedDate) : undefined}
+                    onSelect={(date) => {
+                      if (date) {
+                        setSelectedDate(format(date, "yyyy-MM-dd"));
+                      }
+                    }}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           ) : (
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex flex-col gap-2">
                 <Label className="text-sm font-medium">Data Início</Label>
-                <Input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-40 h-9"
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-40 h-9 justify-start text-left font-normal",
+                        !startDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {startDate ? format(new Date(startDate), "dd/MM/yyyy", { locale: ptBR }) : "Selecionar"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={startDate ? new Date(startDate) : undefined}
+                      onSelect={(date) => {
+                        if (date) {
+                          setStartDate(format(date, "yyyy-MM-dd"));
+                        }
+                      }}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="flex flex-col gap-2">
                 <Label className="text-sm font-medium">Data Fim</Label>
-                <Input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="w-40 h-9"
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-40 h-9 justify-start text-left font-normal",
+                        !endDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {endDate ? format(new Date(endDate), "dd/MM/yyyy", { locale: ptBR }) : "Selecionar"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={endDate ? new Date(endDate) : undefined}
+                      onSelect={(date) => {
+                        if (date) {
+                          setEndDate(format(date, "yyyy-MM-dd"));
+                        }
+                      }}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
           )}
@@ -814,12 +882,33 @@ export default function CashPosition() {
 
             <div>
               <Label htmlFor="date">Data</Label>
-              <Input
-                id="date"
-                type="date"
-                value={newEntry.date}
-                onChange={(e) => setNewEntry({ ...newEntry, date: e.target.value })}
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !newEntry.date && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {newEntry.date ? format(new Date(newEntry.date), "dd/MM/yyyy", { locale: ptBR }) : "Selecionar data"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={newEntry.date ? new Date(newEntry.date) : undefined}
+                    onSelect={(date) => {
+                      if (date) {
+                        setNewEntry({ ...newEntry, date: format(date, "yyyy-MM-dd") });
+                      }
+                    }}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="flex items-end">
@@ -1000,11 +1089,33 @@ export default function CashPosition() {
 
                                 <div>
                                   <Label>Data</Label>
-                                  <Input
-                                    type="date"
-                                    value={editingEntry.date}
-                                    onChange={(e) => setEditingEntry({ ...editingEntry, date: e.target.value })}
-                                  />
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        className={cn(
+                                          "w-full justify-start text-left font-normal",
+                                          !editingEntry.date && "text-muted-foreground"
+                                        )}
+                                      >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {editingEntry.date ? format(new Date(editingEntry.date), "dd/MM/yyyy", { locale: ptBR }) : "Selecionar data"}
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                      <CalendarComponent
+                                        mode="single"
+                                        selected={editingEntry.date ? new Date(editingEntry.date) : undefined}
+                                        onSelect={(date) => {
+                                          if (date) {
+                                            setEditingEntry({ ...editingEntry, date: format(date, "yyyy-MM-dd") });
+                                          }
+                                        }}
+                                        initialFocus
+                                        className="p-3 pointer-events-auto"
+                                      />
+                                    </PopoverContent>
+                                  </Popover>
                                 </div>
 
                                 <div className="flex gap-2">
