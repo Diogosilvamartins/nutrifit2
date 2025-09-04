@@ -93,18 +93,33 @@ export const WhatsAppTemplates = () => {
     try {
       if (selectedTemplate) {
         // Edit existing
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('whatsapp_templates')
           .update({
             name: editForm.name,
             message: editForm.message,
             category: editForm.category,
-            variables: variables,
-            updated_at: new Date().toISOString()
+            variables: variables
           })
-          .eq('id', selectedTemplate.id);
+          .eq('id', selectedTemplate.id)
+          .select()
+          .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error("Update error:", error);
+          throw error;
+        }
+
+        console.log("Template updated successfully:", data);
+
+        // Update local state immediately
+        setTemplates(prevTemplates => 
+          prevTemplates.map(template => 
+            template.id === selectedTemplate.id 
+              ? { ...template, ...editForm, variables }
+              : template
+          )
+        );
 
         toast({
           title: "Template atualizado!",
@@ -112,7 +127,7 @@ export const WhatsAppTemplates = () => {
         });
       } else {
         // Add new
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('whatsapp_templates')
           .insert([{
             name: editForm.name,
@@ -120,7 +135,9 @@ export const WhatsAppTemplates = () => {
             category: editForm.category,
             variables: variables,
             created_by: (await supabase.auth.getUser()).data.user?.id
-          }]);
+          }])
+          .select()
+          .single();
 
         if (error) throw error;
 
@@ -130,6 +147,7 @@ export const WhatsAppTemplates = () => {
         });
       }
 
+      // Refresh templates from server
       await fetchTemplates();
       setIsEditing(false);
       setSelectedTemplate(null);
@@ -138,7 +156,7 @@ export const WhatsAppTemplates = () => {
       console.error("Error saving template:", error);
       toast({
         title: "Erro ao salvar",
-        description: "Não foi possível salvar o template.",
+        description: "Não foi possível salvar o template. Verifique os dados e tente novamente.",
         variant: "destructive"
       });
     } finally {
