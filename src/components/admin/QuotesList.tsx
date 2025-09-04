@@ -1,15 +1,18 @@
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Search, Eye, FileText, MessageCircle, Calendar, XCircle, ShoppingCart, Edit } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger 
+} from "@/components/ui/dialog";
 import { 
   AlertDialog, 
   AlertDialogAction, 
@@ -21,10 +24,16 @@ import {
   AlertDialogTitle, 
   AlertDialogTrigger 
 } from "@/components/ui/alert-dialog";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { toast } from "@/hooks/use-toast";
 import { generatePDF } from "@/lib/pdf-generator";
-import { formatCurrency } from "@/lib/utils";
+import { FileText, MessageCircle, Edit, ShoppingCart, RotateCcw, XCircle, CalendarIcon, Search, Eye } from "lucide-react";
 import EditQuoteForm from "./EditQuoteForm";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface Quote {
   id: string;
@@ -55,6 +64,13 @@ interface Quote {
   updated_at: string;
 }
 
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  }).format(value);
+};
+
 export default function QuotesList() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [filteredQuotes, setFilteredQuotes] = useState<Quote[]>([]);
@@ -66,12 +82,13 @@ export default function QuotesList() {
   const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
   const [cancellationReason, setCancellationReason] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const [saleDate, setSaleDate] = useState<Date>(new Date());
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("");
   const { user } = useAuth();
 
   useEffect(() => {
     fetchQuotes();
-  }, [statusFilter]); // Refaz a busca quando o filtro de status mudar
+  }, [statusFilter]);
 
   useEffect(() => {
     filterQuotes();
@@ -83,8 +100,6 @@ export default function QuotesList() {
         .from('quotes')
         .select('*');
       
-      // Se o filtro de status for "canceled", busca apenas cancelados
-      // Caso contrário, exclui os cancelados por padrão
       if (statusFilter === 'canceled') {
         query = query.eq('status', 'canceled');
       } else {
@@ -95,7 +110,6 @@ export default function QuotesList() {
       
       if (error) throw error;
       
-      // Cast the products JSON to proper type
       const quotesWithTypedProducts = (data || []).map(quote => ({
         ...quote,
         customer_name: quote.customer_name || '',
@@ -131,7 +145,6 @@ export default function QuotesList() {
   const filterQuotes = () => {
     let filtered = quotes;
 
-    // Search filter
     if (searchTerm) {
       filtered = filtered.filter(quote =>
         quote.quote_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -140,12 +153,10 @@ export default function QuotesList() {
       );
     }
 
-    // Status filter
     if (statusFilter !== "all") {
       filtered = filtered.filter(quote => quote.status === statusFilter);
     }
 
-    // Type filter
     if (typeFilter !== "all") {
       filtered = filtered.filter(quote => quote.quote_type === typeFilter);
     }
@@ -154,17 +165,10 @@ export default function QuotesList() {
   };
 
   const handleCancelQuote = async (quoteId: string) => {
-    if (!user) {
-      console.log('No user found');
-      return;
-    }
+    if (!user) return;
     
-    console.log('Starting cancellation for quote:', quoteId);
-    
-    // Find the quote to get its type
     const quoteToCancel = quotes.find(q => q.id === quoteId);
     if (!quoteToCancel) {
-      console.error('Quote not found:', quoteId);
       toast({
         title: "Erro",
         description: "Orçamento não encontrado.",
@@ -175,13 +179,6 @@ export default function QuotesList() {
     
     setIsLoading(true);
     try {
-      console.log('Calling cancel_sale_and_return_stock RPC with:', {
-        sale_id: quoteId,
-        sale_type: quoteToCancel.quote_type === 'sale' ? 'sale' : 'quote',
-        user_id_param: user.id,
-        reason: cancellationReason || null
-      });
-
       const { data, error } = await supabase.rpc('cancel_sale_and_return_stock', {
         sale_id: quoteId,
         sale_type: quoteToCancel.quote_type === 'sale' ? 'sale' : 'quote',
@@ -189,14 +186,7 @@ export default function QuotesList() {
         reason: cancellationReason || null
       });
 
-      console.log('RPC result:', { data, error });
-
-      if (error) {
-        console.error('RPC error:', error);
-        throw error;
-      }
-
-      console.log('Cancellation successful, refreshing quotes...');
+      if (error) throw error;
 
       toast({
         title: `${quoteToCancel.quote_type === 'sale' ? 'Venda' : 'Orçamento'} cancelado`,
@@ -217,12 +207,11 @@ export default function QuotesList() {
     }
   };
 
-  const handleConvertToSale = async (quoteId: string, paymentMethod: string) => {
+  const handleConvertToSale = async (quoteId: string, paymentMethod: string, saleDate: Date) => {
     if (!user) return;
     
     setIsLoading(true);
     try {
-      // Get the quote data
       const { data: quoteData, error: fetchError } = await supabase
         .from('quotes')
         .select('*')
@@ -240,7 +229,6 @@ export default function QuotesList() {
         return;
       }
 
-      // Check stock availability for all products
       const products = Array.isArray(quoteData.products) ? quoteData.products as Array<{
         id: string;
         name: string;
@@ -265,20 +253,19 @@ export default function QuotesList() {
         }
       }
 
-      // Update quote to sale
       const { error: updateError } = await supabase
         .from('quotes')
         .update({
           quote_type: 'sale',
           status: 'completed',
           payment_status: 'paid',
-          payment_method: paymentMethod
+          payment_method: paymentMethod,
+          sale_date: format(saleDate, 'yyyy-MM-dd')
         })
         .eq('id', quoteId);
 
       if (updateError) throw updateError;
 
-      // Create stock movements for sale
       for (const product of products) {
         await supabase
           .from('stock_movements')
@@ -397,7 +384,6 @@ export default function QuotesList() {
         notes: quote.notes
       });
 
-      // Download PDF
       const link = document.createElement('a');
       link.href = pdf;
       link.download = `${quote.quote_type}-${quote.quote_number}.pdf`;
@@ -416,23 +402,16 @@ export default function QuotesList() {
   };
 
   const getWhatsAppUrl = (quote: Quote): string | null => {
-    if (!quote.customer_phone) {
-      return null;
-    }
+    if (!quote.customer_phone) return null;
 
-    // Normalize phone number for WhatsApp
     const cleanPhone = quote.customer_phone.replace(/\D/g, "");
     let phone = cleanPhone;
     
-    // Add country code if not present
     if (!phone.startsWith('55') && phone.length >= 10) {
       phone = `55${phone}`;
     }
     
-    // Validate phone length
-    if (phone.length < 12) {
-      return null;
-    }
+    if (phone.length < 12) return null;
 
     const message = `Olá ${quote.customer_name}! \n\n${quote.quote_type === "sale" ? "Recibo de Compra" : "Orçamento"} Nº: ${quote.quote_number}\n\n${quote.products.map((item: any) => `• ${item.name} - Qtd: ${item.quantity} - ${formatCurrency(item.total)}`).join('\n')}\n\nSubtotal: ${formatCurrency(quote.subtotal)}\n${quote.discount_amount > 0 ? `Desconto: ${formatCurrency(quote.discount_amount)}` : ''}\nTotal: ${formatCurrency(quote.total_amount)}\n\n${quote.quote_type === "quote" && quote.valid_until ? `Válido até: ${new Date(quote.valid_until).toLocaleDateString('pt-BR')}` : ''}\n\nNutri & Fit Suplementos`;
 
@@ -442,23 +421,16 @@ export default function QuotesList() {
   };
 
   const getWhatsAppFallbackUrl = (quote: Quote): string | null => {
-    if (!quote.customer_phone) {
-      return null;
-    }
+    if (!quote.customer_phone) return null;
 
-    // Normalize phone number for WhatsApp
     const cleanPhone = quote.customer_phone.replace(/\D/g, "");
     let phone = cleanPhone;
     
-    // Add country code if not present
     if (!phone.startsWith('55') && phone.length >= 10) {
       phone = `55${phone}`;
     }
     
-    // Validate phone length
-    if (phone.length < 12) {
-      return null;
-    }
+    if (phone.length < 12) return null;
 
     const message = `Olá ${quote.customer_name}! \n\n${quote.quote_type === "sale" ? "Recibo de Compra" : "Orçamento"} Nº: ${quote.quote_number}\n\n${quote.products.map((item: any) => `• ${item.name} - Qtd: ${item.quantity} - ${formatCurrency(item.total)}`).join('\n')}\n\nSubtotal: ${formatCurrency(quote.subtotal)}\n${quote.discount_amount > 0 ? `Desconto: ${formatCurrency(quote.discount_amount)}` : ''}\nTotal: ${formatCurrency(quote.total_amount)}\n\n${quote.quote_type === "quote" && quote.valid_until ? `Válido até: ${new Date(quote.valid_until).toLocaleDateString('pt-BR')}` : ''}\n\nNutri & Fit Suplementos`;
 
@@ -474,7 +446,6 @@ export default function QuotesList() {
   return (
     <TooltipProvider>
       <div className="space-y-4">
-        {/* Filters */}
         <Card>
           <CardHeader>
             <CardTitle>Orçamentos e Vendas</CardTitle>
@@ -522,7 +493,6 @@ export default function QuotesList() {
           </CardContent>
         </Card>
 
-        {/* Quotes List */}
         {filteredQuotes.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-center text-muted-foreground">
@@ -736,25 +706,83 @@ export default function QuotesList() {
                                 <DialogTitle>Converter Orçamento em Venda</DialogTitle>
                               </DialogHeader>
                               <div className="space-y-4">
-                                <p>Selecione o método de pagamento para converter este orçamento em venda:</p>
-                                <Select
-                                   onValueChange={async (value) => {
-                                     await handleConvertToSale(quote.id, value);
-                                     // Close dialog after successful conversion
-                                     const closeButton = document.querySelector('[data-radix-dialog-close]') as HTMLButtonElement;
-                                     if (closeButton) closeButton.click();
-                                   }}
-                                 >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Selecione o método de pagamento" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="dinheiro">Dinheiro</SelectItem>
-                                    <SelectItem value="pix">PIX</SelectItem>
-                                    <SelectItem value="cartao_debito">Cartão de Débito</SelectItem>
-                                    <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
-                                  </SelectContent>
-                                </Select>
+                                <div className="space-y-2">
+                                  <label className="text-sm font-medium">Data da venda:</label>
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        className={cn(
+                                          "w-full justify-start text-left font-normal",
+                                          !saleDate && "text-muted-foreground"
+                                        )}
+                                      >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {saleDate ? format(saleDate, "dd/MM/yyyy") : <span>Selecionar data</span>}
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                      <Calendar
+                                        mode="single"
+                                        selected={saleDate}
+                                        onSelect={(date) => date && setSaleDate(date)}
+                                        initialFocus
+                                        className="pointer-events-auto"
+                                      />
+                                    </PopoverContent>
+                                  </Popover>
+                                </div>
+                                
+                                <div className="space-y-2">
+                                  <label className="text-sm font-medium">Método de pagamento:</label>
+                                  <Select onValueChange={setSelectedPaymentMethod} value={selectedPaymentMethod}>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Selecione o método de pagamento" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                                      <SelectItem value="pix">PIX</SelectItem>
+                                      <SelectItem value="cartao_debito">Cartão de Débito</SelectItem>
+                                      <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                      setSelectedPaymentMethod("");
+                                      setSaleDate(new Date());
+                                      const closeButton = document.querySelector('[data-radix-dialog-close]') as HTMLButtonElement;
+                                      if (closeButton) closeButton.click();
+                                    }}
+                                    className="flex-1"
+                                  >
+                                    Cancelar
+                                  </Button>
+                                  <Button
+                                    onClick={async () => {
+                                      if (!selectedPaymentMethod) {
+                                        toast({
+                                          title: "Erro",
+                                          description: "Selecione um método de pagamento",
+                                          variant: "destructive"
+                                        });
+                                        return;
+                                      }
+                                      await handleConvertToSale(quote.id, selectedPaymentMethod, saleDate);
+                                      setSelectedPaymentMethod("");
+                                      setSaleDate(new Date());
+                                      const closeButton = document.querySelector('[data-radix-dialog-close]') as HTMLButtonElement;
+                                      if (closeButton) closeButton.click();
+                                    }}
+                                    disabled={isLoading || !selectedPaymentMethod}
+                                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                                  >
+                                    {isLoading ? "Convertendo..." : "Converter em Venda"}
+                                  </Button>
+                                </div>
                               </div>
                             </DialogContent>
                           </Dialog>
@@ -818,7 +846,6 @@ export default function QuotesList() {
                                  <AlertDialogCancel>Voltar</AlertDialogCancel>
                                  <AlertDialogAction 
                                     onClick={(e) => {
-                                      console.log('AlertDialogAction clicked for quote:', quote.id);
                                       handleCancelQuote(quote.id);
                                     }} 
                                     disabled={isLoading}
@@ -839,7 +866,6 @@ export default function QuotesList() {
         )}
       </div>
 
-      {/* Edit Quote Modal */}
       {editingQuote && (
         <Dialog open={!!editingQuote} onOpenChange={() => setEditingQuote(null)}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
