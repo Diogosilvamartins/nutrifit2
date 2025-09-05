@@ -51,7 +51,7 @@ interface Customer {
 
 const Admin = () => {
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { signOut, isAdmin } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [showCustomerForm, setShowCustomerForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -64,6 +64,16 @@ const Admin = () => {
     const meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute("content", "Administre produtos e pedidos da loja Nutri & Fit.");
   }, []);
+
+  useEffect(() => {
+    // Redirect non-admin users to allowed tabs if they try to access restricted tabs
+    if (!isAdmin) {
+      const restrictedTabs = ['financeiro', 'contabilidade', 'clientes', 'produtos', 'fornecedores', 'estoque', 'pedidos', 'usuarios', 'sistema', 'whatsapp'];
+      if (restrictedTabs.includes(activeTab)) {
+        setActiveTab('pdv');
+      }
+    }
+  }, [isAdmin, activeTab]);
 
   const handleFormSuccess = () => {
     setShowForm(false);
@@ -100,12 +110,12 @@ const Admin = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {!showForm && !showCustomerForm && activeTab === "produtos" && (
+          {!showForm && !showCustomerForm && activeTab === "produtos" && isAdmin && (
             <Button onClick={() => setShowForm(true)}>
               Novo Produto
             </Button>
           )}
-          {!showForm && !showCustomerForm && activeTab === "clientes" && (
+          {!showForm && !showCustomerForm && activeTab === "clientes" && isAdmin && (
             <Button onClick={() => setShowCustomerForm(true)}>
               Novo Cliente
             </Button>
@@ -130,35 +140,28 @@ const Admin = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-12">
+        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-12' : 'grid-cols-3'}`}>
           <TabsTrigger value="pdv">PDV</TabsTrigger>
           <TabsTrigger value="orcamentos">Orçamentos</TabsTrigger>
-          <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
-          <TabsTrigger value="contabilidade">Contabilidade</TabsTrigger>
           <TabsTrigger value="comissoes">Comissões</TabsTrigger>
-          <TabsTrigger value="clientes">Clientes</TabsTrigger>
-          <TabsTrigger value="produtos">Produtos</TabsTrigger>
-          <TabsTrigger value="fornecedores">Fornecedores</TabsTrigger>
-          <TabsTrigger value="estoque">Estoque</TabsTrigger>
-          <TabsTrigger value="pedidos">Pedidos</TabsTrigger>
-          <TabsTrigger value="usuarios">Usuários</TabsTrigger>
-          <TabsTrigger value="sistema">Sistema</TabsTrigger>
-          <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
+          {isAdmin && (
+            <>
+              <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+              <TabsTrigger value="contabilidade">Contabilidade</TabsTrigger>
+              <TabsTrigger value="clientes">Clientes</TabsTrigger>
+              <TabsTrigger value="produtos">Produtos</TabsTrigger>
+              <TabsTrigger value="fornecedores">Fornecedores</TabsTrigger>
+              <TabsTrigger value="estoque">Estoque</TabsTrigger>
+              <TabsTrigger value="pedidos">Pedidos</TabsTrigger>
+              <TabsTrigger value="usuarios">Usuários</TabsTrigger>
+              <TabsTrigger value="sistema">Sistema</TabsTrigger>
+              <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
+            </>
+          )}
         </TabsList>
 
         <TabsContent value="pdv" className="mt-6">
           <PointOfSale />
-        </TabsContent>
-
-        <TabsContent value="financeiro" className="mt-6">
-          <div className="space-y-6">
-            <FinancialDashboard />
-            <CashPosition />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="contabilidade" className="mt-6">
-          <AccountingModule />
         </TabsContent>
 
         <TabsContent value="orcamentos" className="mt-6">
@@ -168,88 +171,99 @@ const Admin = () => {
         <TabsContent value="comissoes" className="mt-6">
           <CommissionManagement />
         </TabsContent>
-        
-        <TabsContent value="clientes" className="mt-6">
-          <div className="grid gap-6 lg:grid-cols-2">
-            {showCustomerForm && (
-              <div>
-                <CustomerForm
-                  customer={editingCustomer}
-                  onSuccess={handleFormSuccess}
-                  onCancel={handleCancel}
-                />
+
+        {isAdmin && (
+          <>
+            <TabsContent value="financeiro" className="mt-6">
+              <div className="space-y-6">
+                <FinancialDashboard />
+                <CashPosition />
               </div>
-            )}
-            <div className={showCustomerForm ? "" : "lg:col-span-2"}>
-              <CustomerList
-                onEdit={handleEditCustomer}
-                refreshTrigger={refreshTrigger}
-              />
-            </div>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="produtos" className="mt-6">
-          <div className="grid gap-6 lg:grid-cols-2">
-            {showForm && (
-              <div>
-                <ProductForm
-                  product={editingProduct}
-                  onSuccess={handleFormSuccess}
-                  onCancel={handleCancel}
-                />
-              </div>
-            )}
-            <div className={showForm ? "" : "lg:col-span-2"}>
-              <ProductList
-                onEdit={handleEdit}
-                refreshTrigger={refreshTrigger}
-              />
-            </div>
-          </div>
-        </TabsContent>
+            </TabsContent>
 
-        <TabsContent value="fornecedores" className="mt-6">
-          <SupplierManagement />
-        </TabsContent>
-          
-        <TabsContent value="estoque">
-          <StockControl onSuccess={() => setRefreshTrigger(prev => prev + 1)} />
-        </TabsContent>
-        
-        <TabsContent value="pedidos" className="mt-6">
-          <OrderList />
-        </TabsContent>
-
-        <TabsContent value="usuarios" className="mt-6">
-          <UserManagement />
-        </TabsContent>
-
-        <TabsContent value="sistema" className="mt-6">
-          <div className="space-y-6">
-            <SystemManagement />
+            <TabsContent value="contabilidade" className="mt-6">
+              <AccountingModule />
+            </TabsContent>
             
-            <div className="border-t pt-6">
-              <h3 className="text-lg font-semibold mb-4">Logo para WhatsApp Business</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Logo otimizada para uso no Meta WhatsApp Business API (1024x1024px, PNG, menos de 5MB)
-              </p>
-              <DownloadImage 
-                src="/src/assets/logo-nutri-fit-oficial.png"
-                filename="nutri-fit-logo-1024x1024.png"
-                alt="Logo Oficial Nutri & Fit - 1024x1024px"
-              />
-            </div>
-          </div>
-        </TabsContent>
+            <TabsContent value="clientes" className="mt-6">
+              <div className="grid gap-6 lg:grid-cols-2">
+                {showCustomerForm && (
+                  <div>
+                    <CustomerForm
+                      customer={editingCustomer}
+                      onSuccess={handleFormSuccess}
+                      onCancel={handleCancel}
+                    />
+                  </div>
+                )}
+                <div className={showCustomerForm ? "" : "lg:col-span-2"}>
+                  <CustomerList
+                    onEdit={handleEditCustomer}
+                    refreshTrigger={refreshTrigger}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="produtos" className="mt-6">
+              <div className="grid gap-6 lg:grid-cols-2">
+                {showForm && (
+                  <div>
+                    <ProductForm
+                      product={editingProduct}
+                      onSuccess={handleFormSuccess}
+                      onCancel={handleCancel}
+                    />
+                  </div>
+                )}
+                <div className={showForm ? "" : "lg:col-span-2"}>
+                  <ProductList
+                    onEdit={handleEdit}
+                    refreshTrigger={refreshTrigger}
+                  />
+                </div>
+              </div>
+            </TabsContent>
 
-        <TabsContent value="vendas-relatorio" className="mt-6">
-          <SalesReport />
-        </TabsContent>
+            <TabsContent value="fornecedores" className="mt-6">
+              <SupplierManagement />
+            </TabsContent>
+              
+            <TabsContent value="estoque">
+              <StockControl onSuccess={() => setRefreshTrigger(prev => prev + 1)} />
+            </TabsContent>
+            
+            <TabsContent value="pedidos" className="mt-6">
+              <OrderList />
+            </TabsContent>
 
-        <TabsContent value="whatsapp" className="mt-6">
-          <WhatsAppTemplates />
-        </TabsContent>
+            <TabsContent value="usuarios" className="mt-6">
+              <UserManagement />
+            </TabsContent>
+
+            <TabsContent value="sistema" className="mt-6">
+              <div className="space-y-6">
+                <SystemManagement />
+                
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-semibold mb-4">Logo para WhatsApp Business</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Logo otimizada para uso no Meta WhatsApp Business API (1024x1024px, PNG, menos de 5MB)
+                  </p>
+                  <DownloadImage 
+                    src="/src/assets/logo-nutri-fit-oficial.png"
+                    filename="nutri-fit-logo-1024x1024.png"
+                    alt="Logo Oficial Nutri & Fit - 1024x1024px"
+                  />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="whatsapp" className="mt-6">
+              <WhatsAppTemplates />
+            </TabsContent>
+          </>
+        )}
         
         <TabsContent value="relatorios" className="mt-6">
           <Reports />
