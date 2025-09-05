@@ -27,10 +27,16 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "@/hooks/use-toast";
 import { generatePDF } from "@/lib/pdf-generator";
-import { FileText, MessageCircle, Edit, ShoppingCart, RotateCcw, XCircle, CalendarIcon, Search, Eye } from "lucide-react";
+import { FileText, MessageCircle, Edit, ShoppingCart, RotateCcw, XCircle, CalendarIcon, Search, Eye, Copy } from "lucide-react";
 import EditQuoteForm from "./EditQuoteForm";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -654,28 +660,91 @@ export default function QuotesList() {
                         {quote.customer_phone && (
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                disabled={!getWhatsAppUrl(quote)}
-                                onClick={() => {
-                                  const appUrl = getWhatsAppUrl(quote);
-                                  const fallbackUrl = getWhatsAppFallbackUrl(quote);
-                                  if (appUrl && fallbackUrl) {
-                                    window.location.href = appUrl;
-                                    setTimeout(() => {
-                                      window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
-                                    }, 2000);
-                                  } else {
-                                    toast({
-                                      title: "Telefone não informado",
-                                      variant: "destructive"
-                                    });
-                                  }
-                                }}
-                              >
-                                <MessageCircle className="w-4 h-4" />
-                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    disabled={!getWhatsAppUrl(quote)}
+                                  >
+                                    <MessageCircle className="w-4 h-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      const appUrl = getWhatsAppUrl(quote);
+                                      if (appUrl) {
+                                        try {
+                                          window.location.href = appUrl;
+                                          setTimeout(() => {
+                                            toast({
+                                              title: "WhatsApp aberto",
+                                              description: "Se não abriu automaticamente, use WhatsApp Web."
+                                            });
+                                          }, 1000);
+                                        } catch (error) {
+                                          toast({
+                                            title: "Erro ao abrir WhatsApp",
+                                            description: "Tente copiar a mensagem manualmente.",
+                                            variant: "destructive"
+                                          });
+                                        }
+                                      }
+                                    }}
+                                  >
+                                    <MessageCircle className="w-4 h-4 mr-2" />
+                                    Abrir WhatsApp App
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      const fallbackUrl = getWhatsAppFallbackUrl(quote);
+                                      if (fallbackUrl) {
+                                        try {
+                                          const newWindow = window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
+                                          if (!newWindow) {
+                                            toast({
+                                              title: "Popup bloqueado",
+                                              description: "Permita popups para este site ou copie a mensagem.",
+                                              variant: "destructive"
+                                            });
+                                          }
+                                        } catch (error) {
+                                          toast({
+                                            title: "WhatsApp Web bloqueado",
+                                            description: "Seu navegador/rede está bloqueando. Use a opção de copiar mensagem.",
+                                            variant: "destructive"
+                                          });
+                                        }
+                                      }
+                                    }}
+                                  >
+                                    <MessageCircle className="w-4 h-4 mr-2" />
+                                    Abrir WhatsApp Web
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      const message = `Olá ${quote.customer_name}! \n\n${quote.quote_type === "sale" ? "Recibo de Compra" : "Orçamento"} Nº: ${quote.quote_number}\n\n${quote.products.map((item: any) => `• ${item.name} - Qtd: ${item.quantity} - ${formatCurrency(item.total)}`).join('\n')}\n\nSubtotal: ${formatCurrency(quote.subtotal)}\n${quote.discount_amount > 0 ? `Desconto: ${formatCurrency(quote.discount_amount)}` : ''}\nTotal: ${formatCurrency(quote.total_amount)}\n\n${quote.quote_type === "quote" && quote.valid_until ? `Válido até: ${new Date(quote.valid_until).toLocaleDateString('pt-BR')}` : ''}\n\nNutri & Fit Suplementos`;
+                                      
+                                      navigator.clipboard.writeText(message).then(() => {
+                                        toast({
+                                          title: "Mensagem copiada!",
+                                          description: `Telefone: ${quote.customer_phone}. Cole a mensagem no WhatsApp.`
+                                        });
+                                      }).catch(() => {
+                                        toast({
+                                          title: "Erro ao copiar",
+                                          description: "Selecione e copie a mensagem manualmente.",
+                                          variant: "destructive"
+                                        });
+                                      });
+                                    }}
+                                  >
+                                    <Copy className="w-4 h-4 mr-2" />
+                                    Copiar Mensagem
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </TooltipTrigger>
                             <TooltipContent>
                               <p>Enviar WhatsApp</p>
