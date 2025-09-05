@@ -26,7 +26,7 @@ interface Order {
 }
 
 const OrderSuccess = () => {
-  const { orderId } = useParams();
+  const { orderId: token } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [order, setOrder] = useState<Order | null>(null);
@@ -34,19 +34,22 @@ const OrderSuccess = () => {
 
   useEffect(() => {
     const fetchOrder = async () => {
-      if (!orderId) return;
+      if (!token) return;
 
       try {
         const { data, error } = await supabase
-          .from("orders")
-          .select("*")
-          .eq("id", orderId)
-          .single();
+          .rpc('get_order_by_public_token', { token });
 
         if (error) throw error;
+        
+        if (!data || data.length === 0) {
+          throw new Error('Order not found');
+        }
+
+        const orderData = data[0];
         setOrder({
-          ...data,
-          products: Array.isArray(data.products) ? data.products : []
+          ...orderData,
+          products: Array.isArray(orderData.products) ? orderData.products : []
         });
       } catch (error) {
         console.error("Erro ao buscar pedido:", error);
@@ -62,7 +65,7 @@ const OrderSuccess = () => {
     };
 
     fetchOrder();
-  }, [orderId, navigate, toast]);
+  }, [token, navigate, toast]);
 
   const copyPixData = (text: string) => {
     navigator.clipboard.writeText(text);

@@ -127,13 +127,13 @@ const Checkout = () => {
       const { data: order, error } = await supabase
         .from("orders")
         .insert(orderData)
-        .select()
+        .select('id, public_access_token')
         .single();
 
       if (error) throw error;
 
       clearCart();
-      navigate(`/order-success/${order.id}`);
+      navigate(`/order-success/${order.public_access_token}`);
       
       toast({
         title: "Pedido criado com sucesso!",

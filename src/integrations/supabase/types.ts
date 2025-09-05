@@ -525,6 +525,7 @@ export type Database = {
           payment_method: string | null
           pix_phone: string | null
           products: Json
+          public_access_token: string
           salesperson_id: string | null
           shipping_cost: number | null
           shipping_type: string | null
@@ -552,6 +553,7 @@ export type Database = {
           payment_method?: string | null
           pix_phone?: string | null
           products: Json
+          public_access_token?: string
           salesperson_id?: string | null
           shipping_cost?: number | null
           shipping_type?: string | null
@@ -579,6 +581,7 @@ export type Database = {
           payment_method?: string | null
           pix_phone?: string | null
           products?: Json
+          public_access_token?: string
           salesperson_id?: string | null
           shipping_cost?: number | null
           shipping_type?: string | null
@@ -1166,6 +1169,29 @@ export type Database = {
           customer_phone_param?: string
         }
         Returns: string
+      }
+      get_order_by_public_token: {
+        Args: { token: string }
+        Returns: {
+          created_at: string
+          customer_cpf: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string
+          delivery_address: string
+          delivery_city: string
+          delivery_complement: string
+          delivery_state: string
+          delivery_zipcode: string
+          id: string
+          payment_method: string
+          pix_phone: string
+          products: Json
+          shipping_cost: number
+          shipping_type: string
+          status: string
+          total_amount: number
+        }[]
       }
       get_public_products: {
         Args: Record<PropertyKey, never>
