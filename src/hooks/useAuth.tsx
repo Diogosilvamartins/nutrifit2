@@ -6,7 +6,7 @@ interface UserProfile {
   id: string;
   user_id: string;
   full_name: string | null;
-  role: 'admin' | 'manager' | 'user';
+  role: 'admin' | 'salesperson' | 'user';
   permissions: Record<string, boolean>;
   is_active: boolean;
 }
@@ -18,7 +18,8 @@ interface AuthContextType {
   loading: boolean;
   hasPermission: (permission: string) => boolean;
   isAdmin: () => boolean;
-  isManager: () => boolean;
+  isSalesperson: () => boolean;
+  isCustomer: () => boolean;
   signOut: () => Promise<void>;
 }
 
@@ -50,7 +51,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (data) {
         setProfile({
           ...data,
-          role: data.role as 'admin' | 'manager' | 'user',
+          role: data.role as 'admin' | 'salesperson' | 'user',
           permissions: (data.permissions as Record<string, boolean>) || {}
         });
       }
@@ -112,17 +113,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     // Default permissions by role
     switch (profile.role) {
-      case 'manager':
-        return ['view_sales', 'manage_products', 'view_customers', 'manage_stock'].includes(permission);
+      case 'salesperson':
+        return ['view_sales', 'create_quotes', 'view_customers', 'manage_customers', 'view_products'].includes(permission);
       case 'user':
-        return ['view_sales'].includes(permission);
+        return ['create_orders', 'view_own_orders'].includes(permission);
       default:
         return false;
     }
   };
 
   const isAdmin = (): boolean => profile?.role === 'admin';
-  const isManager = (): boolean => profile?.role === 'manager';
+  const isSalesperson = (): boolean => profile?.role === 'salesperson';
+  const isCustomer = (): boolean => profile?.role === 'user';
 
   return (
     <AuthContext.Provider value={{ 
@@ -132,8 +134,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       loading, 
       hasPermission, 
       isAdmin, 
-      isManager, 
-      signOut 
+      isSalesperson, 
+      isCustomer,
+      signOut
     }}>
       {children}
     </AuthContext.Provider>

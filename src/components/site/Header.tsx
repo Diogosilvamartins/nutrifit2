@@ -54,11 +54,11 @@ const Header = () => {
                   </div>
                   <Badge 
                     variant={profile.role === 'admin' ? 'destructive' : 
-                             profile.role === 'manager' ? 'secondary' : 'outline'}
+                             profile.role === 'salesperson' ? 'secondary' : 'outline'}
                     className="text-xs hidden sm:inline-flex"
                   >
                     {profile.role === 'admin' ? 'Admin' : 
-                     profile.role === 'manager' ? 'Gerente' : 'Usuário'}
+                     profile.role === 'salesperson' ? 'Vendedor' : 'Cliente'}
                   </Badge>
                 </div>
               )}

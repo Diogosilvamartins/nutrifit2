@@ -1209,6 +1209,18 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_customer: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_salesperson: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       log_audit_event: {
         Args: {
           new_values_param?: Json

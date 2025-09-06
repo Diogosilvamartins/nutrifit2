@@ -49,9 +49,11 @@ interface Customer {
   created_at: string;
 }
 
+import RoleProtectedRoute from "@/components/auth/RoleProtectedRoute";
+
 const Admin = () => {
   const navigate = useNavigate();
-  const { signOut, isAdmin } = useAuth();
+  const { signOut, isAdmin, isSalesperson } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [showCustomerForm, setShowCustomerForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -66,14 +68,23 @@ const Admin = () => {
   }, []);
 
   useEffect(() => {
-    // Redirect non-admin users to allowed tabs if they try to access restricted tabs
-    if (!isAdmin) {
-      const restrictedTabs = ['financeiro', 'contabilidade', 'clientes', 'produtos', 'fornecedores', 'estoque', 'pedidos', 'usuarios', 'sistema', 'whatsapp'];
-      if (restrictedTabs.includes(activeTab)) {
+    // Redirect users to allowed tabs if they try to access restricted tabs
+    if (!isAdmin() && !isSalesperson()) {
+      // Clientes (users) não têm acesso ao painel admin
+      // Redirecionar para a página principal seria mais apropriado
+      return;
+    }
+    
+    if (isSalesperson()) {
+      const salesPersonTabs = ['pdv', 'orcamentos', 'comissoes'];
+      if (!salesPersonTabs.includes(activeTab)) {
         setActiveTab('pdv');
       }
+    } else if (!isAdmin()) {
+      // Fallback para outros casos
+      setActiveTab('pdv');
     }
-  }, [isAdmin, activeTab]);
+  }, [isAdmin, isSalesperson, activeTab]);
 
   const handleFormSuccess = () => {
     setShowForm(false);
@@ -101,7 +112,8 @@ const Admin = () => {
   };
 
   return (
-    <main className="container py-10">
+    <RoleProtectedRoute allowedRoles={['admin', 'salesperson']}>
+      <main className="container py-10">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="font-display text-3xl md:text-4xl">Painel Administrativo</h1>
@@ -110,12 +122,12 @@ const Admin = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {!showForm && !showCustomerForm && activeTab === "produtos" && isAdmin && (
+          {!showForm && !showCustomerForm && activeTab === "produtos" && isAdmin() && (
             <Button onClick={() => setShowForm(true)}>
               Novo Produto
             </Button>
           )}
-          {!showForm && !showCustomerForm && activeTab === "clientes" && isAdmin && (
+          {!showForm && !showCustomerForm && activeTab === "clientes" && (isAdmin() || isSalesperson()) && (
             <Button onClick={() => setShowCustomerForm(true)}>
               Novo Cliente
             </Button>
@@ -140,11 +152,13 @@ const Admin = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-12' : 'grid-cols-3'}`}>
+        <TabsList className={`grid w-full ${isAdmin() ? 'grid-cols-12' : 'grid-cols-3'}`}>
           <TabsTrigger value="pdv">PDV</TabsTrigger>
           <TabsTrigger value="orcamentos">Orçamentos</TabsTrigger>
-          <TabsTrigger value="comissoes">Comissões</TabsTrigger>
-          {isAdmin && (
+          {(isAdmin() || isSalesperson()) && (
+            <TabsTrigger value="comissoes">Comissões</TabsTrigger>
+          )}
+          {isAdmin() && (
             <>
               <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
               <TabsTrigger value="contabilidade">Contabilidade</TabsTrigger>
@@ -172,7 +186,7 @@ const Admin = () => {
           <CommissionManagement />
         </TabsContent>
 
-        {isAdmin && (
+        {isAdmin() && (
           <>
             <TabsContent value="financeiro" className="mt-6">
               <div className="space-y-6">
@@ -270,6 +284,7 @@ const Admin = () => {
         </TabsContent>
       </Tabs>
     </main>
+    </RoleProtectedRoute>
   );
 };
 

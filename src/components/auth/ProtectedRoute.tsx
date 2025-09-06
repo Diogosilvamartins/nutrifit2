@@ -5,7 +5,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner'
 
 interface Props {
   children: ReactNode
-  roles?: Array<'admin' | 'manager'>
+  roles?: Array<'admin' | 'salesperson' | 'user'>
 }
 
 export default function ProtectedRoute({ children, roles }: Props) {
