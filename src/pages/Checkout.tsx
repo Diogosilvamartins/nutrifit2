@@ -355,14 +355,14 @@ const Checkout = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="md:col-span-2">
                   <Label htmlFor="delivery_address">Endereço (Rua/Avenida) *</Label>
                   <Input
                     id="delivery_address"
                     value={formData.delivery_address}
                     onChange={(e) => handleInputChange("delivery_address", e.target.value)}
-                    placeholder="Rua/Avenida será preenchida automaticamente"
+                    placeholder="Será preenchido automaticamente após digitar o CEP"
                     required
                     className={formData.delivery_address ? "bg-muted" : ""}
                     readOnly={!!formData.delivery_address}
@@ -378,32 +378,8 @@ const Checkout = () => {
                     required
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Digite apenas o número da residência
+                    Digite o número da residência
                   </p>
-                </div>
-                <div>
-                  <Label htmlFor="delivery_city">Cidade *</Label>
-                  <Input
-                    id="delivery_city"
-                    value={formData.delivery_city}
-                    onChange={(e) => handleInputChange("delivery_city", e.target.value)}
-                    required
-                    className={formData.delivery_city ? "bg-muted" : ""}
-                    readOnly={!!formData.delivery_city}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="delivery_state">Estado *</Label>
-                  <Input
-                    id="delivery_state"
-                    value={formData.delivery_state}
-                    onChange={(e) => handleInputChange("delivery_state", e.target.value)}
-                    placeholder="MG"
-                    maxLength={2}
-                    required
-                    className={formData.delivery_state ? "bg-muted" : ""}
-                    readOnly={!!formData.delivery_state}
-                  />
                 </div>
               </div>
 
