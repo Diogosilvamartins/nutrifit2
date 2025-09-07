@@ -43,6 +43,7 @@ const Checkout = () => {
     customer_cpf: "",
     customer_phone: "",
     delivery_address: "",
+    delivery_number: "",
     delivery_city: "",
     delivery_state: "",
     delivery_zipcode: "",
@@ -143,7 +144,7 @@ const Checkout = () => {
   const validateForm = () => {
     const required = [
       "customer_name", "customer_email", "customer_cpf", 
-      "delivery_address", "delivery_city", "delivery_state", "delivery_zipcode"
+      "delivery_address", "delivery_number", "delivery_city", "delivery_state", "delivery_zipcode"
     ];
     
     return required.every(field => formData[field as keyof typeof formData].trim() !== "");
@@ -180,6 +181,7 @@ const Checkout = () => {
       const orderData = {
         user_id: user!.id, // Now we know user is authenticated
         ...formData,
+        delivery_address: `${formData.delivery_address}, ${formData.delivery_number}`, // Combine address and number
         products: items as any,
         total_amount: getTotalPrice() + selectedShippingCost,
         shipping_cost: selectedShippingCost,
@@ -353,21 +355,56 @@ const Checkout = () => {
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="delivery_address">Endereço completo (com número) *</Label>
-                <Input
-                  id="delivery_address"
-                  value={formData.delivery_address}
-                  onChange={(e) => handleInputChange("delivery_address", e.target.value)}
-                  placeholder={formData.delivery_address ? 
-                    `${formData.delivery_address}, [número]` : 
-                    "Rua/Avenida, número"
-                  }
-                  required
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Após preencher o CEP, adicione apenas o número da residência
-                </p>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <Label htmlFor="delivery_address">Endereço (Rua/Avenida) *</Label>
+                  <Input
+                    id="delivery_address"
+                    value={formData.delivery_address}
+                    onChange={(e) => handleInputChange("delivery_address", e.target.value)}
+                    placeholder="Rua/Avenida será preenchida automaticamente"
+                    required
+                    className={formData.delivery_address ? "bg-muted" : ""}
+                    readOnly={!!formData.delivery_address}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="delivery_number">Número *</Label>
+                  <Input
+                    id="delivery_number"
+                    value={formData.delivery_number}
+                    onChange={(e) => handleInputChange("delivery_number", e.target.value)}
+                    placeholder="123"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Digite apenas o número da residência
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="delivery_city">Cidade *</Label>
+                  <Input
+                    id="delivery_city"
+                    value={formData.delivery_city}
+                    onChange={(e) => handleInputChange("delivery_city", e.target.value)}
+                    required
+                    className={formData.delivery_city ? "bg-muted" : ""}
+                    readOnly={!!formData.delivery_city}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="delivery_state">Estado *</Label>
+                  <Input
+                    id="delivery_state"
+                    value={formData.delivery_state}
+                    onChange={(e) => handleInputChange("delivery_state", e.target.value)}
+                    placeholder="MG"
+                    maxLength={2}
+                    required
+                    className={formData.delivery_state ? "bg-muted" : ""}
+                    readOnly={!!formData.delivery_state}
+                  />
+                </div>
               </div>
 
               <div>
