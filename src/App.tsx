@@ -30,7 +30,7 @@ const App = () => {
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/checkout" element={<Checkout />} />
-                <Route path="/order-success/:orderId" element={<OrderSuccess />} />
+                <Route path="/order-success/:token" element={<OrderSuccess />} />
                 <Route path="/admin" element={
                   <ProtectedRoute>
                     <Admin />

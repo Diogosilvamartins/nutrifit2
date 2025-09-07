@@ -17,12 +17,24 @@ import { formatCurrency } from "@/lib/utils";
 
 const Checkout = () => {
   const { items, getTotalPrice, clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { shippingOptions, calculations, calculateShipping, fetchShippingOptions } = useShipping();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [selectedShipping, setSelectedShipping] = useState("");
+
+  // Redirect to auth if user is not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      toast({
+        title: "Login necessário",
+        description: "Você precisa estar logado para finalizar uma compra.",
+        variant: "destructive"
+      });
+      navigate("/auth");
+    }
+  }, [user, authLoading, navigate, toast]);
 
   const [formData, setFormData] = useState({
     customer_name: "",
@@ -115,7 +127,7 @@ const Checkout = () => {
 
     try {
       const orderData = {
-        user_id: user?.id || null,
+        user_id: user!.id, // Now we know user is authenticated
         ...formData,
         products: items as any,
         total_amount: getTotalPrice() + selectedShippingCost,
@@ -151,6 +163,18 @@ const Checkout = () => {
       setLoading(false);
     }
   };
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Verificando autenticação...</span>
+        </div>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
