@@ -22,6 +22,7 @@ const Checkout = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [zipCodeLoading, setZipCodeLoading] = useState(false);
   const [selectedShipping, setSelectedShipping] = useState("");
 
   // Redirect to auth if user is not authenticated
@@ -48,15 +49,65 @@ const Checkout = () => {
     delivery_complement: ""
   });
 
+  // Buscar endereço por CEP usando ViaCEP
+  const fetchAddressByZipCode = async (zipcode: string) => {
+    const cleanZipCode = zipcode.replace(/\D/g, '');
+    
+    if (cleanZipCode.length !== 8) return;
+
+    setZipCodeLoading(true);
+    
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cleanZipCode}/json/`);
+      const data = await response.json();
+      
+      if (data.erro) {
+        toast({
+          title: "CEP não encontrado",
+          description: "Verifique se o CEP está correto.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Atualizar os campos de endereço automaticamente
+      setFormData(prev => ({
+        ...prev,
+        delivery_address: data.logradouro || "",
+        delivery_city: data.localidade || "",
+        delivery_state: data.uf || "",
+        delivery_complement: prev.delivery_complement // Manter o complemento que já estava preenchido
+      }));
+
+      toast({
+        title: "Endereço encontrado!",
+        description: "Agora adicione apenas o número da residência no campo 'Endereço'."
+      });
+
+    } catch (error) {
+      console.error("Erro ao buscar CEP:", error);
+      toast({
+        title: "Erro ao buscar CEP",
+        description: "Tente novamente ou preencha o endereço manualmente.",
+        variant: "destructive"
+      });
+    } finally {
+      setZipCodeLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchShippingOptions();
   }, [fetchShippingOptions]);
 
-  // Calculate shipping when ZIP code changes
+  // Calculate shipping and fetch address when ZIP code changes
   useEffect(() => {
     if (formData.delivery_zipcode.replace(/\D/g, '').length === 8) {
       const totalWeight = items.reduce((sum, item) => sum + 1 * item.quantity, 0); // 1kg per item as default
       calculateShipping(formData.delivery_zipcode, Math.max(totalWeight, 1));
+      
+      // Buscar endereço automaticamente
+      fetchAddressByZipCode(formData.delivery_zipcode);
     }
   }, [formData.delivery_zipcode, items, calculateShipping]);
 
@@ -254,17 +305,28 @@ const Checkout = () => {
 
               <Separator />
 
-              <div>
-                <Label htmlFor="delivery_address">Endereço *</Label>
-                <Input
-                  id="delivery_address"
-                  value={formData.delivery_address}
-                  onChange={(e) => handleInputChange("delivery_address", e.target.value)}
-                  required
-                />
-              </div>
-
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="delivery_zipcode">CEP *</Label>
+                  <div className="relative">
+                    <Input
+                      id="delivery_zipcode"
+                      value={formData.delivery_zipcode}
+                      onChange={(e) => handleInputChange("delivery_zipcode", e.target.value)}
+                      placeholder="00000-000"
+                      maxLength={9}
+                      required
+                    />
+                    {zipCodeLoading && (
+                      <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Digite o CEP para buscar o endereço automaticamente
+                  </p>
+                </div>
                 <div>
                   <Label htmlFor="delivery_city">Cidade *</Label>
                   <Input
@@ -272,6 +334,8 @@ const Checkout = () => {
                     value={formData.delivery_city}
                     onChange={(e) => handleInputChange("delivery_city", e.target.value)}
                     required
+                    className={formData.delivery_city ? "bg-muted" : ""}
+                    readOnly={!!formData.delivery_city}
                   />
                 </div>
                 <div>
@@ -283,19 +347,27 @@ const Checkout = () => {
                     placeholder="MG"
                     maxLength={2}
                     required
+                    className={formData.delivery_state ? "bg-muted" : ""}
+                    readOnly={!!formData.delivery_state}
                   />
                 </div>
-                <div>
-                  <Label htmlFor="delivery_zipcode">CEP *</Label>
-                  <Input
-                    id="delivery_zipcode"
-                    value={formData.delivery_zipcode}
-                    onChange={(e) => handleInputChange("delivery_zipcode", e.target.value)}
-                    placeholder="00000-000"
-                    maxLength={9}
-                    required
-                  />
-                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="delivery_address">Endereço completo (com número) *</Label>
+                <Input
+                  id="delivery_address"
+                  value={formData.delivery_address}
+                  onChange={(e) => handleInputChange("delivery_address", e.target.value)}
+                  placeholder={formData.delivery_address ? 
+                    `${formData.delivery_address}, [número]` : 
+                    "Rua/Avenida, número"
+                  }
+                  required
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Após preencher o CEP, adicione apenas o número da residência
+                </p>
               </div>
 
               <div>
