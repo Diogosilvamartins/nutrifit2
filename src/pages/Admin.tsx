@@ -8,7 +8,7 @@ import ProductForm from "@/components/admin/ProductForm";
 import ProductList from "@/components/admin/ProductList";
 import OrderList from "@/components/admin/OrderList";
 import StockControl from "@/components/admin/StockControl";
-import PointOfSale from "@/components/admin/PointOfSale";
+import PointOfSale from "@/components/admin/PointOfSaleRefactored";
 import QuotesList from "@/components/admin/QuotesList";
 import FinancialDashboard from "@/components/admin/FinancialDashboard";
 import CashPosition from "@/components/admin/CashPosition";
