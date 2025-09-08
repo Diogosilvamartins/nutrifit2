@@ -36,40 +36,40 @@ export const generatePDF = async (data: PDFData): Promise<string> => {
   
   // Header
   doc.setFillColor(...primaryColor);
-  doc.rect(0, 0, 220, 30, 'F');
+  doc.rect(0, 0, 220, 45, 'F');
   
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(20);
   doc.setFont('helvetica', 'bold');
-  doc.text(storeName, 15, 20);
+  doc.text(storeName, 15, 18);
+  
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Av. Rio Doce, 1075 - Ilha dos Araújos', 15, 28);
+  doc.text('PIX Celular 33984043348 - Diogo da Silva Martins', 15, 38);
   
   // Document type and number
   doc.setTextColor(...primaryColor);
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
   const documentType = data.type === 'quote' ? 'ORÇAMENTO' : 'RECIBO DE VENDA';
-  doc.text(`${documentType} Nº ${data.number}`, 15, 45);
+  doc.text(`${documentType} Nº ${data.number}`, 15, 60);
   
   // Date
   doc.setTextColor(...textColor);
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   const currentDate = new Date().toLocaleDateString('pt-BR');
-  doc.text(`Data: ${currentDate}`, 15, 55);
-  
-  // Store info
-  doc.setFontSize(8);
-  doc.text(storePhone, 15, 60);
-  doc.text(storeAddress, 15, 65);
+  doc.text(`Data: ${currentDate}`, 15, 70);
   
   // Customer info
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
-  doc.text('DADOS DO CLIENTE:', 15, 80);
+  doc.text('DADOS DO CLIENTE:', 15, 95);
   
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  let yPos = 90;
+  let yPos = 105;
   doc.text(`Nome: ${data.customer.name}`, 15, yPos);
   
   if (data.customer.phone) {
