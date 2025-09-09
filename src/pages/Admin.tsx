@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Home } from "lucide-react";
+import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
+import { Menu } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import ProductForm from "@/components/admin/ProductForm";
 import ProductList from "@/components/admin/ProductList";
@@ -23,6 +23,8 @@ import SalesReport from "@/components/admin/SalesReport";
 import { DownloadImage } from "@/components/ui/download-image";
 import { WhatsAppTemplates } from "@/components/templates/WhatsAppTemplates";
 import { AccountingModule } from "@/components/admin/accounting/AccountingModule";
+import { AppSidebar } from "@/components/admin/AppSidebar";
+import { AdminDashboard } from "@/components/admin/AdminDashboard";
 
 interface Product {
   id: string;
@@ -59,7 +61,7 @@ const Admin = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [activeTab, setActiveTab] = useState("pdv");
+  const [activeSection, setActiveSection] = useState("dashboard");
 
   useEffect(() => {
     document.title = "Admin | Nutri & Fit Suplemento Nutricional";
@@ -76,15 +78,15 @@ const Admin = () => {
     }
     
     if (isSalesperson()) {
-      const salesPersonTabs = ['pdv', 'orcamentos', 'comissoes'];
-      if (!salesPersonTabs.includes(activeTab)) {
-        setActiveTab('pdv');
+      const salesPersonSections = ['dashboard', 'pdv', 'orcamentos', 'comissoes', 'clientes'];
+      if (!salesPersonSections.includes(activeSection)) {
+        setActiveSection('dashboard');
       }
     } else if (!isAdmin()) {
       // Fallback para outros casos
-      setActiveTab('pdv');
+      setActiveSection('dashboard');
     }
-  }, [isAdmin, isSalesperson, activeTab]);
+  }, [isAdmin, isSalesperson, activeSection]);
 
   const handleFormSuccess = () => {
     setShowForm(false);
@@ -111,179 +113,133 @@ const Admin = () => {
     setEditingCustomer(null);
   };
 
+  const renderContent = () => {
+    switch (activeSection) {
+      case "dashboard":
+        return <AdminDashboard />
+      case "pdv":
+        return <PointOfSale />
+      case "orcamentos":
+        return <QuotesList />
+      case "comissoes":
+        return <CommissionManagement />
+      case "financeiro":
+        return (
+          <div className="space-y-6">
+            <FinancialDashboard />
+            <CashPosition />
+          </div>
+        )
+      case "contabilidade":
+        return <AccountingModule />
+      case "clientes":
+        return (
+          <div className="grid gap-6 lg:grid-cols-2">
+            {showCustomerForm && (
+              <div>
+                <CustomerForm
+                  customer={editingCustomer}
+                  onSuccess={handleFormSuccess}
+                  onCancel={handleCancel}
+                />
+              </div>
+            )}
+            <div className={showCustomerForm ? "" : "lg:col-span-2"}>
+              <CustomerList
+                onEdit={handleEditCustomer}
+                refreshTrigger={refreshTrigger}
+              />
+            </div>
+          </div>
+        )
+      case "produtos":
+        return (
+          <div className="grid gap-6 lg:grid-cols-2">
+            {showForm && (
+              <div>
+                <ProductForm
+                  product={editingProduct}
+                  onSuccess={handleFormSuccess}
+                  onCancel={handleCancel}
+                />
+              </div>
+            )}
+            <div className={showForm ? "" : "lg:col-span-2"}>
+              <ProductList
+                onEdit={handleEdit}
+                refreshTrigger={refreshTrigger}
+              />
+            </div>
+          </div>
+        )
+      case "fornecedores":
+        return <SupplierManagement />
+      case "estoque":
+        return <StockControl onSuccess={() => setRefreshTrigger(prev => prev + 1)} />
+      case "pedidos":
+        return <OrderList />
+      case "usuarios":
+        return <UserManagement />
+      case "sistema":
+        return (
+          <div className="space-y-6">
+            <SystemManagement />
+            
+            <div className="border-t pt-6">
+              <h3 className="text-lg font-semibold mb-4">Logo para WhatsApp Business</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Logo otimizada para uso no Meta WhatsApp Business API (1024x1024px, PNG, menos de 5MB)
+              </p>
+              <DownloadImage 
+                src="/src/assets/logo-nutri-fit-oficial.png"
+                filename="nutri-fit-logo-1024x1024.png"
+                alt="Logo Oficial Nutri & Fit - 1024x1024px"
+              />
+            </div>
+          </div>
+        )
+      case "whatsapp":
+        return <WhatsAppTemplates />
+      default:
+        return <AdminDashboard />
+    }
+  }
+
   return (
     <RoleProtectedRoute allowedRoles={['admin', 'salesperson']}>
-      <main className="container py-10">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="font-display text-3xl md:text-4xl">Painel Administrativo</h1>
-          <p className="mt-2 text-muted-foreground">
-            Gerencie produtos e pedidos da Nutri & Fit.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          {!showForm && !showCustomerForm && activeTab === "produtos" && isAdmin() && (
-            <Button onClick={() => setShowForm(true)}>
-              Novo Produto
-            </Button>
-          )}
-          {!showForm && !showCustomerForm && activeTab === "clientes" && (isAdmin() || isSalesperson()) && (
-            <Button onClick={() => setShowCustomerForm(true)}>
-              Novo Cliente
-            </Button>
-          )}
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/")}
-            className="gap-2"
-          >
-            <Home className="h-4 w-4" />
-            Voltar ao Site
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={signOut}
-            className="gap-2"
-          >
-            <LogOut className="h-4 w-4" />
-            Sair
-          </Button>
-        </div>
-      </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className={`grid w-full ${isAdmin() ? 'grid-cols-12' : 'grid-cols-3'}`}>
-          <TabsTrigger value="pdv">PDV</TabsTrigger>
-          <TabsTrigger value="orcamentos">Orçamentos</TabsTrigger>
-          {(isAdmin() || isSalesperson()) && (
-            <TabsTrigger value="comissoes">Comissões</TabsTrigger>
-          )}
-          {isAdmin() && (
-            <>
-              <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
-              <TabsTrigger value="contabilidade">Contabilidade</TabsTrigger>
-              <TabsTrigger value="clientes">Clientes</TabsTrigger>
-              <TabsTrigger value="produtos">Produtos</TabsTrigger>
-              <TabsTrigger value="fornecedores">Fornecedores</TabsTrigger>
-              <TabsTrigger value="estoque">Estoque</TabsTrigger>
-              <TabsTrigger value="pedidos">Pedidos</TabsTrigger>
-              <TabsTrigger value="usuarios">Usuários</TabsTrigger>
-              <TabsTrigger value="sistema">Sistema</TabsTrigger>
-              <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
-            </>
-          )}
-        </TabsList>
-
-        <TabsContent value="pdv" className="mt-6">
-          <PointOfSale />
-        </TabsContent>
-
-        <TabsContent value="orcamentos" className="mt-6">
-          <QuotesList />
-        </TabsContent>
-
-        <TabsContent value="comissoes" className="mt-6">
-          <CommissionManagement />
-        </TabsContent>
-
-        {isAdmin() && (
-          <>
-            <TabsContent value="financeiro" className="mt-6">
-              <div className="space-y-6">
-                <FinancialDashboard />
-                <CashPosition />
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full">
+          <AppSidebar 
+            activeSection={activeSection} 
+            onSectionChange={setActiveSection} 
+          />
+          
+          <SidebarInset className="flex-1">
+            <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+              <SidebarTrigger className="-ml-1" />
+              <div className="flex-1">
+                <h1 className="font-display text-xl">Painel Administrativo</h1>
               </div>
-            </TabsContent>
-
-            <TabsContent value="contabilidade" className="mt-6">
-              <AccountingModule />
-            </TabsContent>
-            
-            <TabsContent value="clientes" className="mt-6">
-              <div className="grid gap-6 lg:grid-cols-2">
-                {showCustomerForm && (
-                  <div>
-                    <CustomerForm
-                      customer={editingCustomer}
-                      onSuccess={handleFormSuccess}
-                      onCancel={handleCancel}
-                    />
-                  </div>
+              <div className="flex items-center gap-2">
+                {!showForm && !showCustomerForm && activeSection === "produtos" && isAdmin() && (
+                  <Button onClick={() => setShowForm(true)} size="sm">
+                    Novo Produto
+                  </Button>
                 )}
-                <div className={showCustomerForm ? "" : "lg:col-span-2"}>
-                  <CustomerList
-                    onEdit={handleEditCustomer}
-                    refreshTrigger={refreshTrigger}
-                  />
-                </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="produtos" className="mt-6">
-              <div className="grid gap-6 lg:grid-cols-2">
-                {showForm && (
-                  <div>
-                    <ProductForm
-                      product={editingProduct}
-                      onSuccess={handleFormSuccess}
-                      onCancel={handleCancel}
-                    />
-                  </div>
+                {!showForm && !showCustomerForm && activeSection === "clientes" && (isAdmin() || isSalesperson()) && (
+                  <Button onClick={() => setShowCustomerForm(true)} size="sm">
+                    Novo Cliente
+                  </Button>
                 )}
-                <div className={showForm ? "" : "lg:col-span-2"}>
-                  <ProductList
-                    onEdit={handleEdit}
-                    refreshTrigger={refreshTrigger}
-                  />
-                </div>
               </div>
-            </TabsContent>
-
-            <TabsContent value="fornecedores" className="mt-6">
-              <SupplierManagement />
-            </TabsContent>
-              
-            <TabsContent value="estoque">
-              <StockControl onSuccess={() => setRefreshTrigger(prev => prev + 1)} />
-            </TabsContent>
+            </header>
             
-            <TabsContent value="pedidos" className="mt-6">
-              <OrderList />
-            </TabsContent>
-
-            <TabsContent value="usuarios" className="mt-6">
-              <UserManagement />
-            </TabsContent>
-
-            <TabsContent value="sistema" className="mt-6">
-              <div className="space-y-6">
-                <SystemManagement />
-                
-                <div className="border-t pt-6">
-                  <h3 className="text-lg font-semibold mb-4">Logo para WhatsApp Business</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Logo otimizada para uso no Meta WhatsApp Business API (1024x1024px, PNG, menos de 5MB)
-                  </p>
-                  <DownloadImage 
-                    src="/src/assets/logo-nutri-fit-oficial.png"
-                    filename="nutri-fit-logo-1024x1024.png"
-                    alt="Logo Oficial Nutri & Fit - 1024x1024px"
-                  />
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="whatsapp" className="mt-6">
-              <WhatsAppTemplates />
-            </TabsContent>
-          </>
-        )}
-        
-        <TabsContent value="relatorios" className="mt-6">
-          <Reports />
-        </TabsContent>
-      </Tabs>
-    </main>
+            <main className="flex-1 p-6">
+              {renderContent()}
+            </main>
+          </SidebarInset>
+        </div>
+      </SidebarProvider>
     </RoleProtectedRoute>
   );
 };
