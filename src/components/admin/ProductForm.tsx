@@ -19,6 +19,7 @@ interface Product {
   min_stock_alert?: number;
   description?: string;
   image_url?: string;
+  barcode?: string;
   supplier_id?: string;
 }
 
