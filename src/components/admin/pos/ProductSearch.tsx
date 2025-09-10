@@ -3,16 +3,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search } from "lucide-react";
+import { Search, Scan } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import { Product, ProductSearchProps } from "@/types";
 
-export const ProductSearch = ({ onAddToCart }: ProductSearchProps) => {
+export const ProductSearch = ({ onAddToCart, onBarcodeSearch }: ProductSearchProps & { onBarcodeSearch?: (barcode: string) => Promise<void> }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [barcodeSearch, setBarcodeSearch] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -21,10 +22,26 @@ export const ProductSearch = ({ onAddToCart }: ProductSearchProps) => {
 
   useEffect(() => {
     const filtered = products.filter(product =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase())
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (product.barcode && product.barcode.includes(searchTerm))
     );
     setFilteredProducts(filtered);
   }, [searchTerm, products]);
+
+  const handleBarcodeSearch = async () => {
+    if (!barcodeSearch.trim()) return;
+    
+    if (onBarcodeSearch) {
+      await onBarcodeSearch(barcodeSearch.trim());
+      setBarcodeSearch("");
+    }
+  };
+
+  const handleBarcodeKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleBarcodeSearch();
+    }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -49,10 +66,31 @@ export const ProductSearch = ({ onAddToCart }: ProductSearchProps) => {
     <Card>
       <CardHeader>
         <CardTitle>Produtos</CardTitle>
+        
+        {/* Busca por código de barras */}
+        <div className="relative mb-2">
+          <Scan className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+          <Input
+            placeholder="Código de barras..."
+            value={barcodeSearch}
+            onChange={(e) => setBarcodeSearch(e.target.value)}
+            onKeyPress={handleBarcodeKeyPress}
+            className="pl-10 pr-20"
+          />
+          <Button 
+            size="sm"
+            onClick={handleBarcodeSearch}
+            className="absolute right-1 top-1/2 transform -translate-y-1/2 px-2 py-1 h-8"
+          >
+            Buscar
+          </Button>
+        </div>
+
+        {/* Busca por nome */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
-            placeholder="Buscar produtos..."
+            placeholder="Buscar produtos por nome..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"

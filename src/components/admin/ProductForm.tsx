@@ -46,6 +46,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
     min_stock_alert: product?.min_stock_alert || 5,
     description: product?.description || "",
     image_url: product?.image_url || "",
+    barcode: product?.barcode || "",
     supplier_id: product?.supplier_id || "none",
   });
   const { toast } = useToast();
@@ -256,6 +257,28 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
               rows={3}
             />
           </div>
+
+          <div>
+            <Label htmlFor="barcode">Código de Barras</Label>
+            <div className="flex gap-2">
+              <Input
+                id="barcode"
+                value={formData.barcode}
+                onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
+                placeholder="Digite ou escaneie o código de barras"
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => setShowScanner(true)}
+                title="Escanear código de barras"
+              >
+                <QrCode className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
           
           <div>
             <Label htmlFor="image_url">URL da Imagem</Label>
@@ -282,10 +305,10 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
         isOpen={showScanner}
         onClose={() => setShowScanner(false)}
         onScan={(code) => {
-          setFormData(prev => ({ ...prev, name: code }));
+          setFormData(prev => ({ ...prev, barcode: code }));
           toast({
             title: "Código escaneado!",
-            description: `Código: ${code}`
+            description: `Código de barras: ${code}`
           });
         }}
       />

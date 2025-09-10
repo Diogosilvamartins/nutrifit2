@@ -10,6 +10,7 @@ export interface Product {
   min_stock_alert?: number;
   description?: string;
   image_url?: string;
+  barcode?: string;
   created_at: string;
   updated_at?: string;
 }

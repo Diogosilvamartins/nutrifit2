@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuote } from "@/hooks/useQuote";
+import { useBarcodeScanner } from "@/hooks/useBarcodeScanner";
 import { Product, Profile } from "@/types";
 import { ProductSearch } from "./pos/ProductSearch";
 import { CartSection } from "./pos/CartSection";
@@ -16,6 +17,45 @@ export default function PointOfSaleRefactored() {
   const [salespeople, setSalespeople] = useState<Profile[]>([]);
   const { quote, updateQuote, resetQuote, saveQuote, loading } = useQuote();
   const { toast } = useToast();
+
+  // Scanner de código de barras
+  const handleBarcodeScanned = async (barcode: string) => {
+    try {
+      const { data: product, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('barcode', barcode)
+        .gt('stock_quantity', 0)
+        .single();
+
+      if (error || !product) {
+        toast({
+          title: `Produto não encontrado: ${barcode}`,
+          description: "Verifique se o código de barras está cadastrado",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      await handleAddToCart(product);
+      toast({
+        title: "Produto adicionado!",
+        description: `${product.name} foi adicionado ao carrinho`
+      });
+    } catch (error) {
+      console.error("Erro ao buscar produto por código de barras:", error);
+      toast({
+        title: "Erro ao processar código de barras",
+        variant: "destructive"
+      });
+    }
+  };
+
+  useBarcodeScanner({
+    onBarcodeScanned: handleBarcodeScanned,
+    minLength: 8, // Códigos de barras geralmente têm pelo menos 8 dígitos
+    timeout: 150
+  });
 
   useEffect(() => {
     fetchSalespeople();
@@ -176,7 +216,10 @@ export default function PointOfSaleRefactored() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <ProductSearch onAddToCart={handleAddToCart} />
+      <ProductSearch 
+        onAddToCart={handleAddToCart} 
+        onBarcodeSearch={handleBarcodeScanned}
+      />
       
       <div className="space-y-6">
         <CustomerFormSection
