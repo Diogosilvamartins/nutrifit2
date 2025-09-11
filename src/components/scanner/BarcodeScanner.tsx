@@ -38,6 +38,12 @@ export const BarcodeScanner = ({ onScan, isOpen, onClose }: BarcodeScannerProps)
         variant: "destructive"
       });
     },
+    constraints: {
+      video: {
+        facingMode: 'environment' // Prefer back camera, but allow front camera as fallback
+      }
+    },
+    timeBetweenDecodingAttempts: 300
   });
 
   // Ativar o scanner automaticamente quando o modal abre
