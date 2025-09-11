@@ -7,8 +7,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { QrCode } from "lucide-react";
-import { BarcodeScanner } from "@/components/scanner/BarcodeScanner";
+import { Scan } from "lucide-react";
+import { useBarcodeScanner } from "@/hooks/useBarcodeScanner";
 
 interface Product {
   id?: string;
@@ -38,7 +38,6 @@ interface ProductFormProps {
 export default function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) {
   const [loading, setLoading] = useState(false);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [showScanner, setShowScanner] = useState(false);
   const [formData, setFormData] = useState({
     name: product?.name || "",
     price: product?.price || 0,
@@ -51,6 +50,19 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
     supplier_id: product?.supplier_id || "none",
   });
   const { toast } = useToast();
+
+  // Hook para capturar códigos de barras do leitor Wi-Fi
+  useBarcodeScanner({
+    onBarcodeScanned: (barcode) => {
+      setFormData(prev => ({ ...prev, barcode }));
+      toast({
+        title: "Código de barras capturado!",
+        description: `Código: ${barcode}`,
+      });
+    },
+    minLength: 6,
+    timeout: 100
+  });
 
   useEffect(() => {
     const fetchSuppliers = async () => {
@@ -162,24 +174,13 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="name">Nome do Produto</Label>
-            <div className="flex gap-2">
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
-                className="flex-1"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() => setShowScanner(true)}
-                title="Escanear código de barras"
-              >
-                <QrCode className="h-4 w-4" />
-              </Button>
-            </div>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              required
+              className="w-full"
+            />
           </div>
           
           <div>
@@ -261,23 +262,18 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
 
           <div>
             <Label htmlFor="barcode">Código de Barras</Label>
-            <div className="flex gap-2">
+            <div className="space-y-2">
               <Input
                 id="barcode"
                 value={formData.barcode}
                 onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
-                placeholder="Digite ou escaneie o código de barras"
-                className="flex-1"
+                placeholder="Digite ou use o leitor de código de barras"
+                className="w-full"
               />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() => setShowScanner(true)}
-                title="Escanear código de barras"
-              >
-                <QrCode className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Scan className="h-4 w-4" />
+                <span>Leitor de código de barras ativo - escaneie um código</span>
+              </div>
             </div>
           </div>
           
@@ -301,18 +297,6 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
           </div>
         </form>
       </CardContent>
-      
-      <BarcodeScanner
-        isOpen={showScanner}
-        onClose={() => setShowScanner(false)}
-        onScan={(code) => {
-          setFormData(prev => ({ ...prev, barcode: code }));
-          toast({
-            title: "Código escaneado!",
-            description: `Código de barras: ${code}`
-          });
-        }}
-      />
     </Card>
   );
 }
