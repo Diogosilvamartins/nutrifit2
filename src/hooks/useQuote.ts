@@ -111,7 +111,7 @@ export const useQuote = (): UseQuoteHook => {
         status: type === "sale" ? "completed" : "pending",
         valid_until: quote.valid_until,
         notes: quote.notes,
-        payment_method: quote.has_partial_payment ? null : quote.payment_method,
+        payment_method: quote.has_partial_payment ? "partial" : quote.payment_method,
         payment_status: type === "sale" ? "paid" : "pending",
         salesperson_id: quote.salesperson_id,
         sale_date: quote.sale_date,
