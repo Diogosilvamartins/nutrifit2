@@ -607,6 +607,33 @@ export type Database = {
           },
         ]
       }
+      payment_splits: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          id: string
+          payment_method: string
+          quote_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          payment_method: string
+          quote_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          payment_method?: string
+          quote_id?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           barcode: string | null

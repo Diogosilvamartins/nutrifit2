@@ -55,6 +55,12 @@ export interface Profile {
   updated_at?: string;
 }
 
+export interface PaymentSplit {
+  id?: string;
+  payment_method: 'dinheiro' | 'pix' | 'cartao_debito' | 'cartao_credito';
+  amount: number;
+}
+
 export interface Quote {
   id?: string;
   quote_number?: string;
@@ -82,6 +88,8 @@ export interface Quote {
   notes?: string;
   payment_method?: string;
   payment_status?: 'pending' | 'paid' | 'failed';
+  payment_splits?: PaymentSplit[];
+  has_partial_payment?: boolean;
   shipping_type?: string;
   include_shipping: boolean;
   created_at?: string;
@@ -243,6 +251,11 @@ export interface QuoteFormSectionProps {
   onPaymentMethodChange: (method: string) => void;
   notes?: string;
   onNotesChange: (notes: string) => void;
+  totalAmount: number;
+  paymentSplits: PaymentSplit[];
+  onPaymentSplitsChange: (splits: PaymentSplit[]) => void;
+  hasPartialPayment: boolean;
+  onPartialPaymentToggle: (enabled: boolean) => void;
 }
 
 export interface ActionButtonsProps {

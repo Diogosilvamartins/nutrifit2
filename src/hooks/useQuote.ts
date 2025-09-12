@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Quote, CartItem, UseQuoteHook } from '@/types';
+import { Quote, CartItem, UseQuoteHook, PaymentSplit } from '@/types';
 import { format, addDays } from 'date-fns';
 
 const initialQuoteState: Quote = {
@@ -22,6 +22,8 @@ const initialQuoteState: Quote = {
   payment_status: "pending",
   include_shipping: false,
   shipping_cost: 0,
+  payment_splits: [],
+  has_partial_payment: false,
 };
 
 export const useQuote = (): UseQuoteHook => {
@@ -47,13 +49,26 @@ export const useQuote = (): UseQuoteHook => {
       return null;
     }
 
-    if (type === "sale" && !quote.payment_method) {
+    if (type === "sale" && !quote.payment_method && (!quote.has_partial_payment || quote.payment_splits?.length === 0)) {
       toast({
         title: "Método de pagamento obrigatório",
-        description: "Selecione um método de pagamento para realizar a venda.",
+        description: "Selecione um método de pagamento ou configure o pagamento parcial.",
         variant: "destructive"
       });
       return null;
+    }
+
+    // Validar pagamento parcial
+    if (quote.has_partial_payment && quote.payment_splits) {
+      const totalSplits = quote.payment_splits.reduce((sum, split) => sum + split.amount, 0);
+      if (Math.abs(totalSplits - quote.total_amount) > 0.01) {
+        toast({
+          title: "Pagamento parcial inválido",
+          description: `Total dos pagamentos (R$ ${totalSplits.toFixed(2)}) deve igual ao total da venda (R$ ${quote.total_amount.toFixed(2)}).`,
+          variant: "destructive"
+        });
+        return null;
+      }
     }
 
     setLoading(true);
@@ -96,7 +111,7 @@ export const useQuote = (): UseQuoteHook => {
         status: type === "sale" ? "completed" : "pending",
         valid_until: quote.valid_until,
         notes: quote.notes,
-        payment_method: quote.payment_method,
+        payment_method: quote.has_partial_payment ? null : quote.payment_method,
         payment_status: type === "sale" ? "paid" : "pending",
         salesperson_id: quote.salesperson_id,
         sale_date: quote.sale_date,
@@ -110,6 +125,24 @@ export const useQuote = (): UseQuoteHook => {
         .single();
 
       if (error) throw error;
+
+      // Se for venda com pagamento parcial, registrar os splits
+      if (type === "sale" && quote.has_partial_payment && quote.payment_splits && quote.payment_splits.length > 0) {
+        for (const split of quote.payment_splits) {
+          const { error: splitError } = await supabase
+            .from('payment_splits')
+            .insert([{
+              quote_id: data.id,
+              payment_method: split.payment_method,
+              amount: split.amount,
+              created_by: (await supabase.auth.getUser()).data.user?.id
+            }]);
+          
+          if (splitError) {
+            console.error("Error saving payment split:", splitError);
+          }
+        }
+      }
 
       // Se for venda, atualizar estoque
       if (type === "sale") {

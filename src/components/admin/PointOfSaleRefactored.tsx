@@ -259,12 +259,17 @@ export default function PointOfSaleRefactored() {
         {cart.length > 0 && (
           <>
             <QuoteFormSection
-              validUntil={quote.valid_until}
+              validUntil={quote.valid_until || ''}
               onValidUntilChange={(date) => updateQuote({ valid_until: date })}
-              paymentMethod={quote.payment_method}
+              paymentMethod={quote.payment_method || ''}
               onPaymentMethodChange={(method) => updateQuote({ payment_method: method })}
-              notes={quote.notes}
+              notes={quote.notes || ''}
               onNotesChange={(notes) => updateQuote({ notes })}
+              totalAmount={quote.total_amount}
+              paymentSplits={quote.payment_splits || []}
+              onPaymentSplitsChange={(splits) => updateQuote({ payment_splits: splits })}
+              hasPartialPayment={quote.has_partial_payment || false}
+              onPartialPaymentToggle={(enabled) => updateQuote({ has_partial_payment: enabled })}
             />
 
             <ActionButtons
