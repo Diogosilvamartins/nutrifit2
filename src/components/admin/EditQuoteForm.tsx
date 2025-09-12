@@ -11,6 +11,8 @@ import { formatCurrency } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Minus, Plus, Trash2, Search } from "lucide-react";
 import { format } from "date-fns";
+import { QuoteFormSection } from "./pos/QuoteFormSection";
+import { PaymentSplit } from "@/types";
 
 interface Product {
   id: string;
@@ -48,6 +50,8 @@ interface Quote {
   sale_date?: string;
   created_at: string;
   updated_at: string;
+  payment_splits?: PaymentSplit[];
+  has_partial_payment?: boolean;
 }
 
 interface EditQuoteFormProps {
@@ -76,9 +80,38 @@ export default function EditQuoteForm({ quote, onSave, onCancel, isLoading }: Ed
     sale_date: quote.sale_date || format(new Date(), 'yyyy-MM-dd')
   });
 
+  // Estados para pagamento parcial
+  const [paymentSplits, setPaymentSplits] = useState<PaymentSplit[]>(quote.payment_splits || []);
+  const [hasPartialPayment, setHasPartialPayment] = useState(quote.has_partial_payment || false);
+
   useEffect(() => {
     fetchProducts();
+    if (quote.quote_type === "sale" && quote.id) {
+      fetchPaymentSplits();
+    }
   }, []);
+
+  const fetchPaymentSplits = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('payment_splits')
+        .select('*')
+        .eq('quote_id', quote.id);
+      
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        const mappedSplits: PaymentSplit[] = data.map(split => ({
+          payment_method: split.payment_method as "dinheiro" | "pix" | "cartao_debito" | "cartao_credito",
+          amount: split.amount
+        }));
+        setPaymentSplits(mappedSplits);
+        setHasPartialPayment(true);
+      }
+    } catch (error) {
+      console.error("Error fetching payment splits:", error);
+    }
+  };
 
   useEffect(() => {
     const filtered = products.filter(product =>
@@ -170,13 +203,38 @@ export default function EditQuoteForm({ quote, onSave, onCancel, isLoading }: Ed
     }
     
     // Validar método de pagamento para vendas
-    if (quote.quote_type === "sale" && !formData.payment_method) {
+    if (quote.quote_type === "sale" && !hasPartialPayment && !formData.payment_method) {
       toast({
         title: "Método de pagamento obrigatório",
         description: "Selecione um método de pagamento para a venda.",
         variant: "destructive"
       });
       return;
+    }
+
+    // Validar pagamento parcial para vendas
+    if (quote.quote_type === "sale" && hasPartialPayment) {
+      if (paymentSplits.length === 0) {
+        toast({
+          title: "Pagamento parcial obrigatório",
+          description: "Configure pelo menos uma forma de pagamento.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const totalSplits = paymentSplits.reduce((sum, split) => sum + split.amount, 0);
+      const subtotal = quoteProducts.reduce((sum, item) => sum + item.total, 0);
+      const total = subtotal - formData.discount_amount + (quote.shipping_cost || 0);
+      
+      if (Math.abs(totalSplits - total) > 0.01) {
+        toast({
+          title: "Pagamento parcial inválido",
+          description: `Total dos pagamentos (R$ ${totalSplits.toFixed(2)}) deve igual ao total da venda (R$ ${total.toFixed(2)}).`,
+          variant: "destructive"
+        });
+        return;
+      }
     }
     
     const subtotal = quoteProducts.reduce((sum, item) => sum + item.total, 0);
@@ -188,7 +246,10 @@ export default function EditQuoteForm({ quote, onSave, onCancel, isLoading }: Ed
       subtotal,
       total_amount: Math.max(0, total),
       customer_cpf: formData.customer_cpf ? formData.customer_cpf.replace(/\D/g, '') : "",
-      customer_phone: formData.customer_phone ? formData.customer_phone.replace(/\D/g, '') : ""
+      customer_phone: formData.customer_phone ? formData.customer_phone.replace(/\D/g, '') : "",
+      payment_splits: hasPartialPayment ? paymentSplits : [],
+      has_partial_payment: hasPartialPayment,
+      payment_method: hasPartialPayment ? "partial" : formData.payment_method
     };
     
     onSave(updatedQuote);
@@ -304,38 +365,37 @@ export default function EditQuoteForm({ quote, onSave, onCancel, isLoading }: Ed
               />
             </div>
           )}
-          
-          <div>
-            <Label htmlFor="payment_method">
-              Método de Pagamento {quote.quote_type === "sale" && "*"}
-            </Label>
-            <Select 
-              value={formData.payment_method} 
-              onValueChange={(value) => handleInputChange('payment_method', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="dinheiro">Dinheiro</SelectItem>
-                <SelectItem value="pix">PIX</SelectItem>
-                <SelectItem value="cartao_debito">Cartão Débito</SelectItem>
-                <SelectItem value="cartao_credito">Cartão Crédito</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
         </div>
         
-        <div>
-          <Label htmlFor="notes">Observações</Label>
-          <Textarea
-            id="notes"
-            value={formData.notes}
-            onChange={(e) => handleInputChange('notes', e.target.value)}
-            placeholder="Observações sobre o orçamento..."
-            rows={3}
+        {/* Seção de Pagamento */}
+        {quote.quote_type === "sale" && (
+          <QuoteFormSection
+            validUntil={formData.valid_until}
+            onValidUntilChange={(date) => handleInputChange('valid_until', date)}
+            paymentMethod={formData.payment_method}
+            onPaymentMethodChange={(method) => handleInputChange('payment_method', method)}
+            notes={formData.notes}
+            onNotesChange={(notes) => handleInputChange('notes', notes)}
+            totalAmount={quoteProducts.reduce((sum, item) => sum + item.total, 0) - formData.discount_amount + (quote.shipping_cost || 0)}
+            paymentSplits={paymentSplits}
+            onPaymentSplitsChange={setPaymentSplits}
+            hasPartialPayment={hasPartialPayment}
+            onPartialPaymentToggle={setHasPartialPayment}
           />
-        </div>
+        )}
+        
+        {quote.quote_type === "quote" && (
+          <div>
+            <Label htmlFor="notes">Observações</Label>
+            <Textarea
+              id="notes"
+              value={formData.notes}
+              onChange={(e) => handleInputChange('notes', e.target.value)}
+              placeholder="Observações sobre o orçamento..."
+              rows={3}
+            />
+          </div>
+        )}
       </div>
 
       {/* Products Section */}
