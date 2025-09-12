@@ -2,13 +2,15 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
-import { Menu } from "lucide-react";
+import { Menu, Smartphone, Monitor } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useMobileDetection } from "@/hooks/useMobileDetection";
 import ProductForm from "@/components/admin/ProductForm";
 import ProductList from "@/components/admin/ProductList";
 import OrderList from "@/components/admin/OrderList";
 import StockControl from "@/components/admin/StockControl";
 import PointOfSale from "@/components/admin/PointOfSaleRefactored";
+import { MobilePOS } from "@/components/mobile/MobilePOS";
 import QuotesList from "@/components/admin/QuotesList";
 import FinancialDashboard from "@/components/admin/FinancialDashboard";
 import CashPosition from "@/components/admin/CashPosition";
@@ -56,12 +58,14 @@ import RoleProtectedRoute from "@/components/auth/RoleProtectedRoute";
 const Admin = () => {
   const navigate = useNavigate();
   const { signOut, isAdmin, isSalesperson } = useAuth();
+  const { isMobile } = useMobileDetection();
   const [showForm, setShowForm] = useState(false);
   const [showCustomerForm, setShowCustomerForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [activeSection, setActiveSection] = useState("dashboard");
+  const [useMobilePOS, setUseMobilePOS] = useState(isMobile);
 
   useEffect(() => {
     document.title = "Admin | Nutri & Fit Suplemento Nutricional";
@@ -118,7 +122,37 @@ const Admin = () => {
       case "dashboard":
         return <AdminDashboard />
       case "pdv":
-        return <PointOfSale />
+        return (
+          <div className="space-y-4">
+            {/* Seletor de Versão PDV */}
+            <div className="flex items-center gap-2 p-4 bg-muted/50 rounded-lg">
+              <span className="text-sm font-medium">Versão do PDV:</span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={!useMobilePOS ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setUseMobilePOS(false)}
+                  className="flex items-center gap-2"
+                >
+                  <Monitor className="w-4 h-4" />
+                  Desktop
+                </Button>
+                <Button
+                  variant={useMobilePOS ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setUseMobilePOS(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Smartphone className="w-4 h-4" />
+                  Mobile
+                </Button>
+              </div>
+            </div>
+            
+            {/* Renderização do PDV */}
+            {useMobilePOS ? <MobilePOS /> : <PointOfSale />}
+          </div>
+        )
       case "orcamentos":
         return <QuotesList />
       case "comissoes":
