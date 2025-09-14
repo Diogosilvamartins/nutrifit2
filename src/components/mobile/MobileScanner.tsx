@@ -33,10 +33,18 @@ export const MobileScanner = ({ onBarcodeScanned, onPhotoTaken }: MobileScannerP
       console.error('Scanner error:', error);
       toast({
         title: "Erro no scanner",
-        description: "Verifique as permissões da câmera.",
+        description: "Não foi possível acessar a câmera. Verifique permissões.",
         variant: "destructive"
       });
-    }
+    },
+    constraints: {
+      video: {
+        facingMode: { ideal: 'environment' },
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      }
+    },
+    timeBetweenDecodingAttempts: 250
   });
 
   const handleTakePhoto = async () => {
@@ -58,10 +66,43 @@ export const MobileScanner = ({ onBarcodeScanned, onPhotoTaken }: MobileScannerP
     }
   };
 
-  const handleOpenScanner = () => {
-    setIsScannerOpen(true);
-  };
+  const handleOpenScanner = async () => {
+    // Preflight: check https and mediaDevices support
+    if (!window.isSecureContext) {
+      toast({
+        title: "Conexão não segura",
+        description: "A câmera só funciona em HTTPS. Use o link seguro ou instale como PWA.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!navigator.mediaDevices?.getUserMedia) {
+      toast({
+        title: "Câmera não suportada",
+        description: "Seu navegador não suporta acesso à câmera.",
+        variant: "destructive",
+      });
+      return;
+    }
 
+    try {
+      // Solicita permissão antecipadamente para garantir o prompt
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } },
+        audio: false,
+      });
+      // Libera imediatamente; o hook assumirá depois
+      stream.getTracks().forEach((t) => t.stop());
+      setIsScannerOpen(true);
+    } catch (err) {
+      console.error('Permissão da câmera negada:', err);
+      toast({
+        title: "Permissão negada",
+        description: "Autorize o uso da câmera nas configurações do navegador.",
+        variant: "destructive",
+      });
+    }
+  };
   const handleCloseScanner = () => {
     setIsScannerOpen(false);
   };
