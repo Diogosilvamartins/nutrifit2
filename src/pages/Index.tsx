@@ -4,6 +4,7 @@ import ProductGrid from "@/components/site/ProductGrid";
 import Footer from "@/components/site/Footer";
 import { MobileHero } from "@/components/mobile/MobileHero";
 import { MobileProductGrid } from "@/components/mobile/MobileProductGrid";
+import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
 import { useMobileDetection } from "@/hooks/useMobileDetection";
 import { useEffect } from "react";
 
@@ -46,13 +47,14 @@ const Index = () => {
   }, []);
 
   return (
-    <div>
+    <div className={isMobile ? "pb-16" : ""}>
       <Header />
       <main>
         {isMobile ? (
           <>
             <MobileHero />
             <MobileProductGrid />
+            <MobileBottomNav />
           </>
         ) : (
           <>
@@ -61,7 +63,7 @@ const Index = () => {
           </>
         )}
       </main>
-      <Footer />
+      {!isMobile && <Footer />}
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Menu, X, Home, Package, Phone, ShoppingCart, User, LogIn } from "lucide-react";
+import { Menu, X, Home, Package, Phone, ShoppingCart, User, LogIn, Shield, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
@@ -65,8 +65,12 @@ export const MobileNavigation = () => {
             {user ? (
               <div className="space-y-3">
                 {profile && (
-                  <div className="flex items-center gap-2 px-3 py-2">
-                    <User className="h-4 w-4 text-primary" />
+                  <div className="flex items-center gap-2 px-3 py-2 bg-accent/10 rounded-lg">
+                    {profile.role === 'admin' ? (
+                      <Shield className="h-4 w-4 text-red-500" />
+                    ) : (
+                      <User className="h-4 w-4 text-primary" />
+                    )}
                     <div className="flex-1">
                       <p className="text-sm font-medium">
                         {profile.full_name || user.email}
@@ -82,33 +86,32 @@ export const MobileNavigation = () => {
                     </div>
                   </div>
                 )}
-                <Link to="/admin" onClick={closeMenu}>
-                  <Button variant="outline" className="w-full justify-start">
-                    Admin
-                  </Button>
-                </Link>
                 <Button 
-                  variant="outline" 
+                  variant="destructive" 
                   className="w-full justify-start" 
                   onClick={() => {
                     signOut();
                     closeMenu();
                   }}
                 >
+                  <LogOut className="h-4 w-4 mr-2" />
                   Sair
                 </Button>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <Link to="/auth" onClick={closeMenu}>
                   <Button variant="outline" className="w-full justify-start">
                     <LogIn className="h-4 w-4 mr-2" />
                     Entrar
                   </Button>
                 </Link>
-                <Button variant="hero" className="w-full">
-                  Criar conta
-                </Button>
+                <Link to="/auth" onClick={closeMenu}>
+                  <Button variant="hero" className="w-full justify-start">
+                    <User className="h-4 w-4 mr-2" />
+                    Criar conta
+                  </Button>
+                </Link>
               </div>
             )}
           </div>

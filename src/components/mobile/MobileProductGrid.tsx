@@ -105,11 +105,11 @@ export const MobileProductGrid = () => {
         <p className="text-muted-foreground text-sm">Qualidade que você sente nos resultados.</p>
       </div>
       
-      <div className="grid gap-4">
+      <div className="grid gap-4 pb-20">
         {products.map((product) => (
-          <Card key={product.id} className="overflow-hidden">
-            <div className="flex">
-              <div className="w-24 h-24 flex-shrink-0">
+          <Card key={product.id} className="overflow-hidden shadow-sm">
+            <div className="flex gap-3 p-3">
+              <div className="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden">
                 <img 
                   src={product.image_url || whey} 
                   alt={product.name} 
@@ -121,24 +121,25 @@ export const MobileProductGrid = () => {
                 />
               </div>
               
-              <div className="flex-1 p-3">
-                <h3 className="font-semibold text-sm leading-tight mb-1">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-sm leading-tight mb-1 truncate">
                   {product.name}
                 </h3>
-                <p className="text-xs text-muted-foreground mb-2">
+                <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
                   {product.description}
                 </p>
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-primary">
+                  <span className="font-bold text-primary text-lg">
                     {formatCurrency(product.price)}
                   </span>
                   <div className="flex gap-1">
                     <Button 
                       onClick={() => handleAddToCart(product)}
                       size="sm"
-                      className="h-8 px-2"
+                      className="h-8 px-3 text-xs"
                     >
-                      <Plus className="h-3 w-3" />
+                      <Plus className="h-3 w-3 mr-1" />
+                      Adicionar
                     </Button>
                     <QuickBuy 
                       product={{ 

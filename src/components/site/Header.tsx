@@ -29,65 +29,69 @@ const Header = () => {
         <div className="flex items-center gap-2">
           <CartButton />
           
-          {isMobile ? (
-            <MobileNavigation />
-          ) : (
-            <>
-              {isInstallable && (
-                <Button 
-                  onClick={installApp}
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  <span className="hidden sm:inline">Instalar App</span>
+          {isInstallable && (
+            <Button 
+              onClick={installApp}
+              variant="outline"
+              size="sm"
+              className="hidden sm:flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Instalar App</span>
+            </Button>
+          )}
+          
+          {user ? (
+            <div className="flex items-center gap-2">
+              {profile && !isMobile && (
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
+                    {profile.role === 'admin' ? (
+                      <Shield className="h-4 w-4 text-red-500" />
+                    ) : (
+                      <User className="h-4 w-4 text-primary" />
+                    )}
+                    <span className="text-sm font-medium hidden sm:inline">
+                      {profile.full_name || user.email}
+                    </span>
+                  </div>
+                  <Badge 
+                    variant={profile.role === 'admin' ? 'destructive' : 
+                             profile.role === 'salesperson' ? 'secondary' : 'outline'}
+                    className="text-xs hidden sm:inline-flex"
+                  >
+                    {profile.role === 'admin' ? 'Admin' : 
+                     profile.role === 'salesperson' ? 'Vendedor' : 'Cliente'}
+                  </Badge>
+                </div>
+              )}
+              <Link to="/admin">
+                <Button variant="outline" size="sm">
+                  <Settings className="h-4 w-4 mr-2 sm:mr-2" />
+                  <span className="hidden sm:inline">Admin</span>
+                </Button>
+              </Link>
+              {isMobile ? (
+                <MobileNavigation />
+              ) : (
+                <Button variant="outline" size="sm" onClick={signOut}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sair
                 </Button>
               )}
-              
-              {user ? (
-                <div className="flex items-center gap-2">
-                  {profile && (
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1">
-                        {profile.role === 'admin' ? (
-                          <Shield className="h-4 w-4 text-red-500" />
-                        ) : (
-                          <User className="h-4 w-4 text-primary" />
-                        )}
-                        <span className="text-sm font-medium hidden sm:inline">
-                          {profile.full_name || user.email}
-                        </span>
-                      </div>
-                      <Badge 
-                        variant={profile.role === 'admin' ? 'destructive' : 
-                                 profile.role === 'salesperson' ? 'secondary' : 'outline'}
-                        className="text-xs hidden sm:inline-flex"
-                      >
-                        {profile.role === 'admin' ? 'Admin' : 
-                         profile.role === 'salesperson' ? 'Vendedor' : 'Cliente'}
-                      </Badge>
-                    </div>
-                  )}
-                  <Link to="/admin">
-                    <Button variant="outline" size="sm">
-                      <Settings className="h-4 w-4 mr-2" />
-                      Admin
-                    </Button>
-                  </Link>
-                  <Button variant="outline" size="sm" onClick={signOut}>
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Sair
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <Link to="/auth">
-                    <Button variant="outline" size="sm" aria-label="Entrar">Entrar</Button>
-                  </Link>
-                  <Button variant="hero" size="sm" aria-label="Criar conta">Criar conta</Button>
-                </>
-              )}
+            </div>
+          ) : (
+            <>
+              <Link to="/auth">
+                <Button variant="outline" size="sm" aria-label="Entrar">
+                  <span className="hidden sm:inline">Entrar</span>
+                  <User className="h-4 w-4 sm:hidden" />
+                </Button>
+              </Link>
+              <Button variant="hero" size="sm" aria-label="Criar conta" className="hidden sm:inline-flex">
+                Criar conta
+              </Button>
+              {isMobile && <MobileNavigation />}
             </>
           )}
         </div>

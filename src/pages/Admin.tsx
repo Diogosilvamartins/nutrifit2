@@ -5,6 +5,8 @@ import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/s
 import { Menu, Smartphone, Monitor } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMobileDetection } from "@/hooks/useMobileDetection";
+import { MobileAdminHeader } from "@/components/mobile/MobileAdminHeader";
+// ... keep existing imports
 import ProductForm from "@/components/admin/ProductForm";
 import ProductList from "@/components/admin/ProductList";
 import OrderList from "@/components/admin/OrderList";
@@ -239,6 +241,26 @@ const Admin = () => {
     }
   }
 
+  const getSectionTitle = () => {
+    switch (activeSection) {
+      case "dashboard": return "Dashboard";
+      case "pdv": return "PDV";
+      case "orcamentos": return "Orçamentos";
+      case "comissoes": return "Comissões";
+      case "financeiro": return "Financeiro";
+      case "contabilidade": return "Contabilidade";
+      case "clientes": return "Clientes";
+      case "produtos": return "Produtos";
+      case "fornecedores": return "Fornecedores";
+      case "estoque": return "Estoque";
+      case "pedidos": return "Pedidos";
+      case "usuarios": return "Usuários";
+      case "sistema": return "Sistema";
+      case "whatsapp": return "WhatsApp";
+      default: return "Dashboard";
+    }
+  };
+
   return (
     <RoleProtectedRoute allowedRoles={['admin', 'salesperson']}>
       <SidebarProvider>
@@ -249,26 +271,45 @@ const Admin = () => {
           />
           
           <SidebarInset className="flex-1">
-            <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-              <SidebarTrigger className="-ml-1" />
-              <div className="flex-1">
-                <h1 className="font-display text-xl">Painel Administrativo</h1>
-              </div>
-              <div className="flex items-center gap-2">
-                {!showForm && !showCustomerForm && activeSection === "produtos" && isAdmin() && (
-                  <Button onClick={() => setShowForm(true)} size="sm">
-                    Novo Produto
-                  </Button>
-                )}
-                {!showForm && !showCustomerForm && activeSection === "clientes" && (isAdmin() || isSalesperson()) && (
-                  <Button onClick={() => setShowCustomerForm(true)} size="sm">
-                    Novo Cliente
-                  </Button>
-                )}
-              </div>
-            </header>
+            {isMobile ? (
+              <MobileAdminHeader title={getSectionTitle()} />
+            ) : (
+              <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+                <SidebarTrigger className="-ml-1" />
+                <div className="flex-1">
+                  <h1 className="font-display text-xl">Painel Administrativo</h1>
+                </div>
+                <div className="flex items-center gap-2">
+                  {!showForm && !showCustomerForm && activeSection === "produtos" && isAdmin() && (
+                    <Button onClick={() => setShowForm(true)} size="sm">
+                      Novo Produto
+                    </Button>
+                  )}
+                  {!showForm && !showCustomerForm && activeSection === "clientes" && (isAdmin() || isSalesperson()) && (
+                    <Button onClick={() => setShowCustomerForm(true)} size="sm">
+                      Novo Cliente
+                    </Button>
+                  )}
+                </div>
+              </header>
+            )}
             
-            <main className="flex-1 p-6">
+            <main className={`flex-1 ${isMobile ? 'p-4' : 'p-6'}`}>
+              {/* Mobile floating action buttons */}
+              {isMobile && (
+                <div className="fixed bottom-6 right-4 z-50 flex flex-col gap-2">
+                  {!showForm && !showCustomerForm && activeSection === "produtos" && isAdmin() && (
+                    <Button onClick={() => setShowForm(true)} size="sm" className="shadow-lg">
+                      + Produto
+                    </Button>
+                  )}
+                  {!showForm && !showCustomerForm && activeSection === "clientes" && (isAdmin() || isSalesperson()) && (
+                    <Button onClick={() => setShowCustomerForm(true)} size="sm" className="shadow-lg">
+                      + Cliente
+                    </Button>
+                  )}
+                </div>
+              )}
               {renderContent()}
             </main>
           </SidebarInset>
