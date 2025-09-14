@@ -2,9 +2,14 @@ import Header from "@/components/site/Header";
 import Hero from "@/components/site/Hero";
 import ProductGrid from "@/components/site/ProductGrid";
 import Footer from "@/components/site/Footer";
+import { MobileHero } from "@/components/mobile/MobileHero";
+import { MobileProductGrid } from "@/components/mobile/MobileProductGrid";
+import { useMobileDetection } from "@/hooks/useMobileDetection";
 import { useEffect } from "react";
 
 const Index = () => {
+  const { isMobile } = useMobileDetection();
+  
   useEffect(() => {
     const base = window.location.origin;
     const img = `${base}/og-image.jpg`;
@@ -44,8 +49,17 @@ const Index = () => {
     <div>
       <Header />
       <main>
-        <Hero />
-        <ProductGrid />
+        {isMobile ? (
+          <>
+            <MobileHero />
+            <MobileProductGrid />
+          </>
+        ) : (
+          <>
+            <Hero />
+            <ProductGrid />
+          </>
+        )}
       </main>
       <Footer />
     </div>
