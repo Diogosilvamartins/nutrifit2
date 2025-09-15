@@ -5,9 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, ArrowUp, ArrowDown, RotateCcw } from "lucide-react";
+import { Package, ArrowUp, ArrowDown, RotateCcw, Scan } from "lucide-react";
+import InventoryCheck from "./InventoryCheck";
 
 interface Product {
   id: string;
@@ -54,6 +56,7 @@ export default function StockMovementForm({ onSuccess }: StockMovementFormProps)
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [movements, setMovements] = useState<StockMovement[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [formData, setFormData] = useState({
     product_id: "",
     movement_type: "entrada" as "entrada" | "saida",
@@ -207,13 +210,26 @@ export default function StockMovementForm({ onSuccess }: StockMovementFormProps)
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5" />
-            Controle de Estoque
-          </CardTitle>
-        </CardHeader>
+      <Tabs defaultValue="movements" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="movements" className="flex items-center gap-2">
+            <Package className="h-4 w-4" />
+            Movimentações
+          </TabsTrigger>
+          <TabsTrigger value="inventory" className="flex items-center gap-2">
+            <Scan className="h-4 w-4" />
+            Conferência
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="movements" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                Controle de Estoque
+              </CardTitle>
+            </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -394,8 +410,15 @@ export default function StockMovementForm({ onSuccess }: StockMovementFormProps)
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="inventory">
+        <InventoryCheck onSuccess={() => setRefreshTrigger(prev => prev + 1)} />
+      </TabsContent>
+
+    </Tabs>
     </div>
   );
 }
