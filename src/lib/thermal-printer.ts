@@ -224,72 +224,78 @@ export const printThermalReceiptSystem = (data: ThermalPrintData): void => {
         <title>${header} ${data.number}</title>
         <style>
           @media print {
-            @page { 
-              size: 80mm auto; 
-              margin: 2mm; 
+            @page {
+              size: 80mm auto;
+              margin: 0;
             }
-            body { 
-              font-family: monospace; 
-              font-size: 12px; 
-              line-height: 1.2; 
+            html, body {
               margin: 0;
               padding: 0;
+              height: auto;
+              font-family: monospace;
+              font-size: 12px;
+              line-height: 1.2;
+            }
+            .receipt {
+              padding: 3mm 2mm 10mm; /* 1cm bottom to allow printer cut without waste */
+              width: 100%;
+              box-sizing: border-box;
             }
             .center { text-align: center; }
             .bold { font-weight: bold; }
             .large { font-size: 16px; }
             .separator { border-top: 1px dashed #000; margin: 2px 0; }
-            table { width: 100%; border-collapse: collapse; }
-            td { padding: 1px; }
             .right { text-align: right; }
           }
         </style>
       </head>
       <body>
-        <div class="center bold large">${header} Nº ${data.number}</div>
-        <div class="center">${new Date().toLocaleDateString('pt-BR')}</div>
-        
-        <div class="bold">CLIENTE:</div>
-        <div>${data.customer.name}</div>
-        ${data.customer.phone ? `<div>Tel: ${formatPhone(data.customer.phone)}</div>` : ''}
-        ${data.customer.cpf ? `<div>CPF: ${data.customer.cpf}</div>` : ''}
-        
-        <div class="separator"></div>
-        <div class="bold">QTD PRODUTO                      VALOR</div>
-        <div class="separator"></div>
-        
-        ${data.items.map(item => {
-          const productName = item.name.length > 20 ? item.name.substring(0, 17) + '...' : item.name;
-          return `<div>${item.quantity.toString().padStart(3)} ${productName.padEnd(20)} R$ ${item.total.toFixed(2).replace('.', ',').padStart(8)}</div>`;
-        }).join('')}
-        
-        <div class="separator"></div>
-        <div class="right">
-          ${data.discount > 0 ? `<div>Subtotal: R$ ${data.subtotal.toFixed(2).replace('.', ',')}</div>` : ''}
-          ${data.discount > 0 ? `<div>Desconto: R$ ${data.discount.toFixed(2).replace('.', ',')}</div>` : ''}
-          <div class="bold large">TOTAL: R$ ${data.total.toFixed(2).replace('.', ',')}</div>
+        <div class="receipt">
+          <div class="center bold large">${header} Nº ${data.number}</div>
+          <div class="center">${new Date().toLocaleDateString('pt-BR')}</div>
+          
+          <div class="bold">CLIENTE:</div>
+          <div>${data.customer.name}</div>
+          ${data.customer.phone ? `<div>Tel: ${formatPhone(data.customer.phone)}</div>` : ''}
+          ${data.customer.cpf ? `<div>CPF: ${data.customer.cpf}</div>` : ''}
+          
+          <div class="separator"></div>
+          <div class="bold">QTD PRODUTO                      VALOR</div>
+          <div class="separator"></div>
+          
+          ${data.items.map(item => {
+            const productName = item.name.length > 20 ? item.name.substring(0, 17) + '...' : item.name;
+            return `<div>${item.quantity.toString().padStart(3)} ${productName.padEnd(20)} R$ ${item.total.toFixed(2).replace('.', ',').padStart(8)}</div>`;
+          }).join('')}
+          
+          <div class="separator"></div>
+          <div class="right">
+            ${data.discount > 0 ? `<div>Subtotal: R$ ${data.subtotal.toFixed(2).replace('.', ',')}</div>` : ''}
+            ${data.discount > 0 ? `<div>Desconto: R$ ${data.discount.toFixed(2).replace('.', ',')}</div>` : ''}
+            <div class="bold large">TOTAL: R$ ${data.total.toFixed(2).replace('.', ',')}</div>
+          </div>
+          
+          ${data.paymentMethod ? `
+            <div class="bold">PAGAMENTO:</div>
+            <div>${data.paymentMethod}</div>
+          ` : ''}
+          
+          ${data.type === 'quote' && data.validUntil ? `
+            <div>Válido até: ${new Date(data.validUntil).toLocaleDateString('pt-BR')}</div>
+          ` : ''}
+          
+          ${data.notes ? `
+            <div class="bold">OBSERVAÇÕES:</div>
+            <div>${data.notes}</div>
+          ` : ''}
+          
+          <div class="separator"></div>
+          <div class="center bold">Nutri & Fit Suplementos</div>
+          <div class="center">Av. Rio Doce, 1075 - Ilha dos Araújos</div>
+          <div class="center">Tel: (33) 98404-3348</div>
+          <div class="center">PIX: 33984043348 - Diogo S. Martins</div>
+          <div class="center">${new Date().toLocaleString('pt-BR')}</div>
         </div>
-        
-        ${data.paymentMethod ? `
-          <div class="bold">PAGAMENTO:</div>
-          <div>${data.paymentMethod}</div>
-        ` : ''}
-        
-        ${data.type === 'quote' && data.validUntil ? `
-          <div>Válido até: ${new Date(data.validUntil).toLocaleDateString('pt-BR')}</div>
-        ` : ''}
-        
-        ${data.notes ? `
-          <div class="bold">OBSERVAÇÕES:</div>
-          <div>${data.notes}</div>
-        ` : ''}
-        
-        <div class="separator"></div>
-        <div class="center bold">Nutri & Fit Suplementos</div>
-        <div class="center">Av. Rio Doce, 1075 - Ilha dos Araújos</div>
-        <div class="center">Tel: (33) 98404-3348</div>
-        <div class="center">PIX: 33984043348 - Diogo S. Martins</div>
-        <div class="center">${new Date().toLocaleString('pt-BR')}</div>
       </body>
     </html>
   `);
