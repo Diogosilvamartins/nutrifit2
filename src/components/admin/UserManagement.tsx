@@ -42,7 +42,7 @@ const UserManagement = () => {
       if (error) throw error;
       setUsers((data || []).map(user => ({
         ...user,
-        role: user.role as 'admin' | 'salesperson' | 'user',
+        role: (user.role === 'manager' ? 'salesperson' : user.role) as 'admin' | 'salesperson' | 'user',
         permissions: (user.permissions as Record<string, boolean>) || {}
       })));
     } catch (error) {

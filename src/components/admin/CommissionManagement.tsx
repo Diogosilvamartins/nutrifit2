@@ -89,11 +89,11 @@ export default function CommissionManagement() {
   const fetchData = async () => {
     setIsLoading(true)
     try {
-      // Buscar vendedores (usuários com role admin, manager ou user)
+      // Buscar vendedores (admin, vendedor e usuários ativos)
       const { data: profilesData } = await supabase
         .from('profiles')
         .select('user_id, full_name, role')
-        .in('role', ['admin', 'manager', 'user'])
+        .in('role', ['admin', 'salesperson', 'manager', 'user'])
         .eq('is_active', true)
 
       setSalespeople(profilesData || [])
