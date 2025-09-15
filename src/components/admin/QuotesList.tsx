@@ -36,7 +36,8 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "@/hooks/use-toast";
 import { generatePDF } from "@/lib/pdf-generator";
-import { FileText, MessageCircle, Edit, ShoppingCart, RotateCcw, XCircle, CalendarIcon, Search, Eye, Copy } from "lucide-react";
+import { printThermalReceipt, printThermalReceiptSystem } from "@/lib/thermal-printer";
+import { FileText, MessageCircle, Edit, ShoppingCart, RotateCcw, XCircle, CalendarIcon, Search, Eye, Copy, Printer } from "lucide-react";
 import EditQuoteForm from "./EditQuoteForm";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -654,6 +655,48 @@ export default function QuotesList() {
                           </TooltipTrigger>
                           <TooltipContent>
                             <p>Gerar PDF</p>
+                          </TooltipContent>
+                        </Tooltip>
+
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                try {
+                                  printThermalReceiptSystem({
+                                    type: quote.quote_type,
+                                    number: quote.quote_number,
+                                    customer: {
+                                      name: quote.customer_name,
+                                      phone: quote.customer_phone,
+                                      email: quote.customer_email,
+                                      cpf: quote.customer_cpf
+                                    },
+                                    items: quote.products,
+                                    subtotal: quote.subtotal,
+                                    discount: quote.discount_amount,
+                                    total: quote.total_amount,
+                                    paymentMethod: quote.payment_method,
+                                    validUntil: quote.valid_until,
+                                    notes: quote.notes
+                                  });
+                                } catch (error) {
+                                  console.error('Erro na impressão:', error);
+                                  toast({
+                                    title: "Erro na impressão",
+                                    description: "Verifique se a impressora está conectada e configurada.",
+                                    variant: "destructive"
+                                  });
+                                }
+                              }}
+                            >
+                              <Printer className="w-4 h-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Imprimir</p>
                           </TooltipContent>
                         </Tooltip>
                         
