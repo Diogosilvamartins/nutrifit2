@@ -1,21 +1,43 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MobileHeader } from "./MobileHeader";
 import { OfflineIndicator } from "./OfflineIndicator";
 import { MobileScanner } from "./MobileScanner";
 import { ProductSearch } from "../admin/pos/ProductSearch";
 import { CartSection } from "../admin/pos/CartSection";
 import { QuoteFormSection } from "../admin/pos/QuoteFormSection";
+import { CustomerFormSection } from "../admin/pos/CustomerFormSection";
 import { ActionButtons } from "../admin/pos/ActionButtons";
 import { useQuote } from "@/hooks/useQuote";
-import { Product } from "@/types";
+import { Product, Profile } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useBarcodeScanner } from "@/hooks/useBarcodeScanner";
 
 export const MobilePOS = () => {
   const [cart, setCart] = useState<any[]>([]);
+  const [salespeople, setSalespeople] = useState<Profile[]>([]);
   const { quote, updateQuote, resetQuote, saveQuote, loading } = useQuote();
   const { toast } = useToast();
+
+  // Buscar vendedores
+  useEffect(() => {
+    const fetchSalespeople = async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('role', ['admin', 'manager', 'salesperson', 'user'])
+        .order('full_name');
+
+      if (error) {
+        console.error('Erro ao buscar vendedores:', error);
+        return;
+      }
+
+      setSalespeople(data as Profile[] || []);
+    };
+
+    fetchSalespeople();
+  }, []);
 
   // Scanner de código de barras mobile
   const handleBarcodeScanned = async (barcode: string) => {
@@ -128,6 +150,27 @@ export const MobilePOS = () => {
         <ProductSearch 
           onAddToCart={handleAddToCart} 
           onBarcodeSearch={handleBarcodeScanned}
+        />
+
+        {/* Formulário do Cliente */}
+        <CustomerFormSection
+          customerData={{
+            name: quote.customer_name,
+            phone: quote.customer_phone,
+            email: quote.customer_email,
+            cpf: quote.customer_cpf
+          }}
+          onCustomerChange={(data) => updateQuote({
+            customer_name: data.name || quote.customer_name,
+            customer_phone: data.phone || quote.customer_phone,
+            customer_email: data.email || quote.customer_email,
+            customer_cpf: data.cpf || quote.customer_cpf
+          })}
+          salespeople={salespeople}
+          selectedSalesperson={quote.salesperson_id}
+          onSalespersonChange={(salespersonId) => updateQuote({ salesperson_id: salespersonId })}
+          saleDate={quote.sale_date}
+          onSaleDateChange={(date) => updateQuote({ sale_date: date })}
         />
         
         {/* Carrinho */}
