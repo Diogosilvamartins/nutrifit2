@@ -25,6 +25,27 @@ interface ThermalPrintData {
 const ESC = '\x1B';
 const GS = '\x1D';
 
+// Função para formatar telefone com DDD entre parênteses
+const formatPhone = (phone: string): string => {
+  if (!phone) return '';
+  
+  // Remove todos os caracteres não numéricos
+  const numericPhone = phone.replace(/\D/g, '');
+  
+  // Se tem 11 dígitos (celular com DDD)
+  if (numericPhone.length === 11) {
+    return `(${numericPhone.slice(0, 2)}) ${numericPhone.slice(2, 7)}-${numericPhone.slice(7)}`;
+  }
+  
+  // Se tem 10 dígitos (fixo com DDD)
+  if (numericPhone.length === 10) {
+    return `(${numericPhone.slice(0, 2)}) ${numericPhone.slice(2, 6)}-${numericPhone.slice(6)}`;
+  }
+  
+  // Retorna o número original se não corresponder aos padrões
+  return phone;
+};
+
 const commands = {
   // Configurações básicas
   initialize: ESC + '@',
@@ -98,7 +119,7 @@ export const printThermalReceipt = async (data: ThermalPrintData): Promise<void>
     await print(commands.boldOff);
     await print(`${data.customer.name}\n`);
     if (data.customer.phone) {
-      await print(`Tel: ${data.customer.phone}\n`);
+      await print(`Tel: ${formatPhone(data.customer.phone)}\n`);
     }
     if (data.customer.cpf) {
       await print(`CPF: ${data.customer.cpf}\n`);
@@ -247,7 +268,7 @@ export const printThermalReceiptSystem = (data: ThermalPrintData): void => {
         
         <div class="bold">CLIENTE:</div>
         <div>${data.customer.name}</div>
-        ${data.customer.phone ? `<div>Tel: ${data.customer.phone}</div>` : ''}
+        ${data.customer.phone ? `<div>Tel: ${formatPhone(data.customer.phone)}</div>` : ''}
         ${data.customer.cpf ? `<div>CPF: ${data.customer.cpf}</div>` : ''}
         <br>
         
