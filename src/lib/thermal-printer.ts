@@ -203,8 +203,13 @@ export const printThermalReceipt = async (data: ThermalPrintData): Promise<void>
 
 // Função alternativa usando window.print() para impressoras configuradas no sistema
 export const printThermalReceiptSystem = (data: ThermalPrintData): void => {
+  console.log('Iniciando impressão térmica...', data);
+  
   const printWindow = window.open('', '_blank');
-  if (!printWindow) return;
+  if (!printWindow) {
+    console.error('Pop-up bloqueado! Permita pop-ups para impressão.');
+    throw new Error('Pop-up bloqueado! Permita pop-ups para impressão.');
+  }
 
   const header = data.type === 'quote' ? 'ORÇAMENTO' : 'PEDIDO';
   
@@ -292,7 +297,16 @@ export const printThermalReceiptSystem = (data: ThermalPrintData): void => {
     </html>
   `);
   
+  console.log('Documento HTML criado, fechando e iniciando print...');
   printWindow.document.close();
-  printWindow.print();
-  printWindow.close();
+  
+  // Aguardar um momento para o documento ser processado
+  setTimeout(() => {
+    console.log('Chamando window.print()...');
+    printWindow.print();
+    setTimeout(() => {
+      console.log('Fechando janela de impressão...');
+      printWindow.close();
+    }, 1000);
+  }, 500);
 };

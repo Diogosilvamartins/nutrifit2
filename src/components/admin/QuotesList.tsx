@@ -664,8 +664,9 @@ export default function QuotesList() {
                               size="sm"
                               variant="outline"
                               onClick={() => {
+                                console.log('Botão de impressão clicado');
                                 try {
-                                  printThermalReceiptSystem({
+                                  const printData = {
                                     type: quote.quote_type,
                                     number: quote.quote_number,
                                     customer: {
@@ -681,12 +682,20 @@ export default function QuotesList() {
                                     paymentMethod: quote.payment_method,
                                     validUntil: quote.valid_until,
                                     notes: quote.notes
+                                  };
+                                  
+                                  console.log('Dados para impressão:', printData);
+                                  printThermalReceiptSystem(printData);
+                                  
+                                  toast({
+                                    title: "Impressão iniciada",
+                                    description: "Aguarde a janela de impressão abrir..."
                                   });
                                 } catch (error) {
                                   console.error('Erro na impressão:', error);
                                   toast({
                                     title: "Erro na impressão",
-                                    description: "Verifique se a impressora está conectada e configurada.",
+                                    description: error.message || "Verifique se o navegador permite pop-ups.",
                                     variant: "destructive"
                                   });
                                 }
