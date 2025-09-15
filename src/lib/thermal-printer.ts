@@ -110,7 +110,6 @@ export const printThermalReceipt = async (data: ThermalPrintData): Promise<void>
     
     // Data
     await print(`${new Date().toLocaleDateString('pt-BR')}\n`);
-    await print(commands.newLine);
     
     // CLIENTE
     await print(commands.alignLeft);
@@ -124,7 +123,6 @@ export const printThermalReceipt = async (data: ThermalPrintData): Promise<void>
     if (data.customer.cpf) {
       await print(`CPF: ${data.customer.cpf}\n`);
     }
-    await print(commands.newLine);
     
     // Separador
     await print(commands.lineSeparator);
@@ -159,7 +157,6 @@ export const printThermalReceipt = async (data: ThermalPrintData): Promise<void>
     await print(`TOTAL: R$ ${data.total.toFixed(2).replace('.', ',')}\n`);
     await print(commands.boldOff);
     await print(commands.fontNormal);
-    await print(commands.newLine);
     
     // FORMA DE PAGAMENTO
     if (data.paymentMethod) {
@@ -168,14 +165,12 @@ export const printThermalReceipt = async (data: ThermalPrintData): Promise<void>
       await print('PAGAMENTO:\n');
       await print(commands.boldOff);
       await print(`${data.paymentMethod}\n`);
-      await print(commands.newLine);
     }
     
     // VALIDADE (para orçamentos)
     if (data.type === 'quote' && data.validUntil) {
       const validDate = new Date(data.validUntil).toLocaleDateString('pt-BR');
       await print(`Válido até: ${validDate}\n`);
-      await print(commands.newLine);
     }
     
     // OBSERVAÇÕES
@@ -184,7 +179,6 @@ export const printThermalReceipt = async (data: ThermalPrintData): Promise<void>
       await print('OBSERVAÇÕES:\n');
       await print(commands.boldOff);
       await print(`${data.notes}\n`);
-      await print(commands.newLine);
     }
     
     // Separador
@@ -196,20 +190,10 @@ export const printThermalReceipt = async (data: ThermalPrintData): Promise<void>
     await print('Nutri & Fit Suplementos\n');
     await print(commands.boldOff);
     await print('Av. Rio Doce, 1075 - Ilha dos Araújos\n');
-    await print('Tel: (33) 98404-3348\n');
-    await print(commands.newLine);
-    
-    // PIX
-    await print('PIX: 33984043348 - Diogo S. Martins\n');
-    await print(commands.newLine);
-    
-    // Data/hora
-    await print(commands.fontNormal);
+    await print('Tel: (33) 98404-3348\nPIX: 33984043348 - Diogo S. Martins\n');
     await print(`${new Date().toLocaleString('pt-BR')}\n`);
-    await print(commands.newLine);
-    await print(commands.newLine);
     
-    // Cortar papel
+    // Cortar papel imediatamente após a data/hora
     await print(commands.cutPaper);
     
     // Fechar conexão
@@ -264,13 +248,11 @@ export const printThermalReceiptSystem = (data: ThermalPrintData): void => {
       <body>
         <div class="center bold large">${header} Nº ${data.number}</div>
         <div class="center">${new Date().toLocaleDateString('pt-BR')}</div>
-        <br>
         
         <div class="bold">CLIENTE:</div>
         <div>${data.customer.name}</div>
         ${data.customer.phone ? `<div>Tel: ${formatPhone(data.customer.phone)}</div>` : ''}
         ${data.customer.cpf ? `<div>CPF: ${data.customer.cpf}</div>` : ''}
-        <br>
         
         <div class="separator"></div>
         <div class="bold">QTD PRODUTO                      VALOR</div>
@@ -287,32 +269,26 @@ export const printThermalReceiptSystem = (data: ThermalPrintData): void => {
           ${data.discount > 0 ? `<div>Desconto: R$ ${data.discount.toFixed(2).replace('.', ',')}</div>` : ''}
           <div class="bold large">TOTAL: R$ ${data.total.toFixed(2).replace('.', ',')}</div>
         </div>
-        <br>
         
         ${data.paymentMethod ? `
           <div class="bold">PAGAMENTO:</div>
           <div>${data.paymentMethod}</div>
-          <br>
         ` : ''}
         
         ${data.type === 'quote' && data.validUntil ? `
           <div>Válido até: ${new Date(data.validUntil).toLocaleDateString('pt-BR')}</div>
-          <br>
         ` : ''}
         
         ${data.notes ? `
           <div class="bold">OBSERVAÇÕES:</div>
           <div>${data.notes}</div>
-          <br>
         ` : ''}
         
         <div class="separator"></div>
         <div class="center bold">Nutri & Fit Suplementos</div>
         <div class="center">Av. Rio Doce, 1075 - Ilha dos Araújos</div>
         <div class="center">Tel: (33) 98404-3348</div>
-        <br>
         <div class="center">PIX: 33984043348 - Diogo S. Martins</div>
-        <br>
         <div class="center">${new Date().toLocaleString('pt-BR')}</div>
       </body>
     </html>
