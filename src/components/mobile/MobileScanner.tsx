@@ -39,35 +39,41 @@ export const MobileScanner = ({ onBarcodeScanned, onPhotoTaken }: MobileScannerP
     }
   }, []);
 
-  const { ref } = useZxing({
-    onDecodeResult(result) {
-      const scannedCode = result.getText();
-      if (scannedCode && onBarcodeScanned) {
-        onBarcodeScanned(scannedCode);
-        setIsScannerOpen(false);
-        toast({
-          title: "Código escaneado!",
-          description: `Código: ${scannedCode}`,
-        });
-      }
-    },
-    onError(error) {
-      console.error('Scanner error:', error);
+const defaultVideoConstraints: MediaTrackConstraints = {
+  facingMode: { ideal: 'environment' },
+  width: { ideal: 1280 },
+  height: { ideal: 720 },
+};
+
+const [videoConstraints, setVideoConstraints] = useState<MediaTrackConstraints>(defaultVideoConstraints);
+const [facing, setFacing] = useState<'environment' | 'user'>('environment');
+
+const { ref } = useZxing({
+  onDecodeResult(result) {
+    const scannedCode = result.getText();
+    if (scannedCode && onBarcodeScanned) {
+      onBarcodeScanned(scannedCode);
+      setIsScannerOpen(false);
       toast({
-        title: "Erro no scanner",
-        description: "Não foi possível acessar a câmera. Verifique permissões.",
-        variant: "destructive"
+        title: "Código escaneado!",
+        description: `Código: ${scannedCode}`,
       });
-    },
-    constraints: {
-      video: {
-        facingMode: { ideal: 'environment' },
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
-      }
-    },
-    timeBetweenDecodingAttempts: 250
-  });
+    }
+  },
+  onError(error) {
+    console.error('Scanner error:', error);
+    toast({
+      title: "Erro no scanner",
+      description: "Não foi possível acessar a câmera. Verifique permissões.",
+      variant: "destructive"
+    });
+  },
+  paused: !isScannerOpen,
+  constraints: {
+    video: videoConstraints,
+  },
+  timeBetweenDecodingAttempts: 250,
+});
 
   const handleTakePhoto = async () => {
     try {
@@ -88,43 +94,62 @@ export const MobileScanner = ({ onBarcodeScanned, onPhotoTaken }: MobileScannerP
     }
   };
 
-  const handleOpenScanner = async () => {
-    // Preflight: check https and mediaDevices support
-    if (!window.isSecureContext) {
-      toast({
-        title: "Conexão não segura",
-        description: "A câmera só funciona em HTTPS. Use o link seguro ou instale como PWA.",
-        variant: "destructive",
-      });
-      return;
-    }
-    if (!navigator.mediaDevices?.getUserMedia) {
-      toast({
-        title: "Câmera não suportada",
-        description: "Seu navegador não suporta acesso à câmera.",
-        variant: "destructive",
-      });
-      return;
+const handleOpenScanner = async () => {
+  // Preflight: check https and mediaDevices support
+  if (!window.isSecureContext) {
+    toast({
+      title: "Conexão não segura",
+      description: "A câmera só funciona em HTTPS. Use o link seguro ou instale como PWA.",
+      variant: "destructive",
+    });
+    return;
+  }
+  if (!navigator.mediaDevices?.getUserMedia) {
+    toast({
+      title: "Câmera não suportada",
+      description: "Seu navegador não suporta acesso à câmera.",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  try {
+    // Solicita permissão antecipadamente para garantir o prompt
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' } },
+      audio: false,
+    });
+
+    // Tenta selecionar explicitamente a câmera traseira
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoInputs = devices.filter((d) => d.kind === 'videoinput');
+      const backCam = videoInputs.find((d) => /back|trás|rear|environment/i.test(d.label));
+      if (backCam) {
+        setVideoConstraints({
+          ...defaultVideoConstraints,
+          deviceId: { exact: backCam.deviceId },
+        });
+      } else {
+        setVideoConstraints(defaultVideoConstraints);
+      }
+    } catch (_) {
+      // Silenciosamente mantém constraints padrão
+      setVideoConstraints(defaultVideoConstraints);
     }
 
-    try {
-      // Solicita permissão antecipadamente para garantir o prompt
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' } },
-        audio: false,
-      });
-      // Libera imediatamente; o hook assumirá depois
-      stream.getTracks().forEach((t) => t.stop());
-      setIsScannerOpen(true);
-    } catch (err) {
-      console.error('Permissão da câmera negada:', err);
-      toast({
-        title: "Permissão negada",
-        description: "Autorize o uso da câmera nas configurações do navegador.",
-        variant: "destructive",
-      });
-    }
-  };
+    // Libera imediatamente; o hook assumirá depois
+    stream.getTracks().forEach((t) => t.stop());
+    setIsScannerOpen(true);
+  } catch (err) {
+    console.error('Permissão da câmera negada:', err);
+    toast({
+      title: "Permissão negada",
+      description: "Autorize o uso da câmera nas configurações do navegador.",
+      variant: "destructive",
+    });
+  }
+};
   const handleCloseScanner = () => {
     setIsScannerOpen(false);
   };
@@ -141,9 +166,18 @@ export const MobileScanner = ({ onBarcodeScanned, onPhotoTaken }: MobileScannerP
     }
   };
 
-  const openPhotoUpload = () => {
-    fileInputRef.current?.click();
-  };
+const openPhotoUpload = () => {
+  fileInputRef.current?.click();
+};
+
+const toggleFacing = () => {
+  const next = facing === 'environment' ? 'user' : 'environment';
+  setFacing(next);
+  setVideoConstraints({
+    ...defaultVideoConstraints,
+    facingMode: { exact: next } as any,
+  });
+};
 
   return (
     <>
@@ -196,13 +230,14 @@ export const MobileScanner = ({ onBarcodeScanned, onPhotoTaken }: MobileScannerP
             Carregar Foto da Galeria
           </Button>
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handlePhotoUpload}
-            className="hidden"
-          />
+<input
+  ref={fileInputRef}
+  type="file"
+  accept="image/*"
+  capture="environment"
+  onChange={handlePhotoUpload}
+  className="hidden"
+/>
         </CardContent>
       </Card>
 
@@ -211,24 +246,36 @@ export const MobileScanner = ({ onBarcodeScanned, onPhotoTaken }: MobileScannerP
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
               Scanner de Código de Barras
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCloseScanner}
-                className="h-8 w-8 p-0"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleFacing}
+                  className="h-8 w-8 p-0"
+                  aria-label="Alternar câmera"
+                >
+                  <Camera className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCloseScanner}
+                  className="h-8 w-8 p-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </DialogTitle>
           </DialogHeader>
           
           <div className="relative">
-            <video
-              ref={ref}
-              className="w-full h-64 object-cover rounded-lg bg-black"
-              playsInline
-              muted
-            />
+<video
+  ref={ref}
+  className="w-full h-64 object-cover rounded-lg bg-black"
+  playsInline
+  autoPlay
+  muted
+/>
             <div className="absolute inset-0 border-2 border-primary rounded-lg pointer-events-none">
               <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
                 <div className="w-48 h-32 border-2 border-primary border-dashed rounded-lg flex items-center justify-center">
