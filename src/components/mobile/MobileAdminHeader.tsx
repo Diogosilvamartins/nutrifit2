@@ -31,10 +31,13 @@ export const MobileAdminHeader = ({ title }: MobileAdminHeaderProps) => {
                 <User className="h-4 w-4 text-primary" />
               )}
               <Badge 
-                variant={profile.role === 'admin' ? 'destructive' : 'secondary'}
+                variant={profile.role === 'admin' ? 'destructive' : 
+                         profile.role === 'manager' ? 'default' : 'secondary'}
                 className="text-xs"
               >
-                {profile.role === 'admin' ? 'Admin' : 'Vendedor'}
+                {profile.role === 'admin' ? 'Admin' : 
+                 profile.role === 'manager' ? 'Gerente' :
+                 profile.role === 'salesperson' ? 'Vendedor' : 'Cliente'}
               </Badge>
             </div>
           )}
