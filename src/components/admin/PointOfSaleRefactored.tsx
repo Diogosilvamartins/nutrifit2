@@ -85,14 +85,14 @@ export default function PointOfSaleRefactored() {
       const { data, error } = await supabase
         .from('profiles')
         .select('user_id, full_name, role')
-        .in('role', ['admin', 'salesperson', 'manager', 'user'])
+        .in('role', ['admin', 'manager', 'salesperson', 'user'])
         .eq('is_active', true)
         .order('full_name');
       
       if (error) throw error;
       setSalespeople((data || []).map(item => ({
         ...item,
-        role: (item.role === 'manager' ? 'salesperson' : item.role) as 'admin' | 'salesperson' | 'user'
+        role: item.role as 'admin' | 'manager' | 'salesperson' | 'user'
       })) as Profile[]);
     } catch (error) {
       console.error("Error fetching salespeople:", error);

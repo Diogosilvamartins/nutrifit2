@@ -59,7 +59,7 @@ import RoleProtectedRoute from "@/components/auth/RoleProtectedRoute";
 
 const Admin = () => {
   const navigate = useNavigate();
-  const { signOut, isAdmin, isSalesperson } = useAuth();
+  const { signOut, isAdmin, isManager, isSalesperson } = useAuth();
   const { isMobile } = useMobileDetection();
   const [showForm, setShowForm] = useState(false);
   const [showCustomerForm, setShowCustomerForm] = useState(false);
@@ -92,7 +92,7 @@ const Admin = () => {
       // Fallback para outros casos
       setActiveSection('dashboard');
     }
-  }, [isAdmin, isSalesperson, activeSection]);
+  }, [isAdmin, isManager, isSalesperson, activeSection]);
 
   const handleFormSuccess = () => {
     setShowForm(false);
@@ -262,7 +262,7 @@ const Admin = () => {
   };
 
   return (
-    <RoleProtectedRoute allowedRoles={['admin', 'salesperson']}>
+    <RoleProtectedRoute allowedRoles={['admin', 'manager', 'salesperson']}>
       <SidebarProvider>
         <div className="min-h-screen flex w-full">
           <AppSidebar 
@@ -280,12 +280,12 @@ const Admin = () => {
                   <h1 className="font-display text-xl">Painel Administrativo</h1>
                 </div>
                 <div className="flex items-center gap-2">
-                  {!showForm && !showCustomerForm && activeSection === "produtos" && isAdmin() && (
+                  {!showForm && !showCustomerForm && activeSection === "produtos" && (isAdmin() || isManager()) && (
                     <Button onClick={() => setShowForm(true)} size="sm">
                       Novo Produto
                     </Button>
                   )}
-                  {!showForm && !showCustomerForm && activeSection === "clientes" && (isAdmin() || isSalesperson()) && (
+                  {!showForm && !showCustomerForm && activeSection === "clientes" && (isAdmin() || isManager() || isSalesperson()) && (
                     <Button onClick={() => setShowCustomerForm(true)} size="sm">
                       Novo Cliente
                     </Button>
@@ -298,12 +298,12 @@ const Admin = () => {
               {/* Mobile floating action buttons */}
               {isMobile && (
                 <div className="fixed bottom-6 right-4 z-50 flex flex-col gap-2">
-                  {!showForm && !showCustomerForm && activeSection === "produtos" && isAdmin() && (
+                  {!showForm && !showCustomerForm && activeSection === "produtos" && (isAdmin() || isManager()) && (
                     <Button onClick={() => setShowForm(true)} size="sm" className="shadow-lg">
                       + Produto
                     </Button>
                   )}
-                  {!showForm && !showCustomerForm && activeSection === "clientes" && (isAdmin() || isSalesperson()) && (
+                  {!showForm && !showCustomerForm && activeSection === "clientes" && (isAdmin() || isManager() || isSalesperson()) && (
                     <Button onClick={() => setShowCustomerForm(true)} size="sm" className="shadow-lg">
                       + Cliente
                     </Button>

@@ -6,7 +6,7 @@ interface UserProfile {
   id: string;
   user_id: string;
   full_name: string | null;
-  role: 'admin' | 'salesperson' | 'user';
+  role: 'admin' | 'manager' | 'salesperson' | 'user';
   permissions: Record<string, boolean>;
   is_active: boolean;
 }
@@ -18,6 +18,7 @@ interface AuthContextType {
   loading: boolean;
   hasPermission: (permission: string) => boolean;
   isAdmin: () => boolean;
+  isManager: () => boolean;
   isSalesperson: () => boolean;
   isCustomer: () => boolean;
   signOut: () => Promise<void>;
@@ -51,7 +52,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (data) {
         setProfile({
           ...data,
-          role: data.role as 'admin' | 'salesperson' | 'user',
+          role: data.role as 'admin' | 'manager' | 'salesperson' | 'user',
           permissions: (data.permissions as Record<string, boolean>) || {}
         });
       }
@@ -113,8 +114,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     // Default permissions by role
     switch (profile.role) {
+      case 'manager':
+        // Manager can do everything except manage users
+        return !['manage_users', 'create_users', 'delete_users'].includes(permission);
       case 'salesperson':
-        return ['view_sales', 'create_quotes', 'view_customers', 'manage_customers', 'view_products'].includes(permission);
+        return [
+          'view_sales', 'create_sales', 'create_quotes', 'view_customers', 
+          'manage_customers', 'view_products', 'view_pos', 'manage_pos',
+          'view_orders', 'manage_orders', 'view_commissions'
+        ].includes(permission);
       case 'user':
         return ['create_orders', 'view_own_orders'].includes(permission);
       default:
@@ -123,6 +131,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const isAdmin = (): boolean => profile?.role === 'admin';
+  const isManager = (): boolean => profile?.role === 'manager';
   const isSalesperson = (): boolean => profile?.role === 'salesperson';
   const isCustomer = (): boolean => profile?.role === 'user';
 
@@ -134,6 +143,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       loading, 
       hasPermission, 
       isAdmin, 
+      isManager, 
       isSalesperson, 
       isCustomer,
       signOut

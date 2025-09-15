@@ -42,7 +42,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ activeSection, onSectionChange }: AppSidebarProps) {
   const { state } = useSidebar()
-  const { isAdmin, isSalesperson, signOut } = useAuth()
+  const { isAdmin, isManager, isSalesperson, signOut } = useAuth()
   const navigate = useNavigate()
 
   const isCollapsed = state === "collapsed"
@@ -143,20 +143,20 @@ export function AppSidebar({ activeSection, onSectionChange }: AppSidebarProps) 
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Vendas - disponível para admin e salesperson */}
-        {renderMenuGroup(salesItems, "Vendas", isAdmin() || isSalesperson())}
+        {/* Vendas - disponível para admin, manager e salesperson */}
+        {renderMenuGroup(salesItems, "Vendas", isAdmin() || isManager() || isSalesperson())}
 
-        {/* Estoque - apenas admin */}
-        {renderMenuGroup(stockItems, "Estoque", isAdmin())}
+        {/* Estoque - admin e manager */}
+        {renderMenuGroup(stockItems, "Estoque", isAdmin() || isManager())}
 
-        {/* Clientes - admin e salesperson */}
-        {renderMenuGroup(customerItems, "Clientes", isAdmin() || isSalesperson())}
+        {/* Clientes - admin, manager e salesperson */}
+        {renderMenuGroup(customerItems, "Clientes", isAdmin() || isManager() || isSalesperson())}
 
-        {/* Pedidos - apenas admin */}
-        {renderMenuGroup(orderItems, "Pedidos", isAdmin())}
+        {/* Pedidos - admin e manager */}
+        {renderMenuGroup(orderItems, "Pedidos", isAdmin() || isManager())}
 
-        {/* Financeiro - apenas admin */}
-        {renderMenuGroup(financeItems, "Financeiro", isAdmin())}
+        {/* Financeiro - admin e manager */}
+        {renderMenuGroup(financeItems, "Financeiro", isAdmin() || isManager())}
 
         {/* Sistema - apenas admin */}
         {renderMenuGroup(systemItems, "Sistema", isAdmin())}

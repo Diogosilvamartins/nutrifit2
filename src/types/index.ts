@@ -48,7 +48,7 @@ export interface Profile {
   id?: string;
   user_id: string;
   full_name: string;
-  role: 'admin' | 'salesperson' | 'user' | 'manager'; // 'manager' mantido por compatibilidade
+  role: 'admin' | 'manager' | 'salesperson' | 'user';
   permissions?: Record<string, boolean>;
   is_active?: boolean;
   created_at?: string;

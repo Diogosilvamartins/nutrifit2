@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 
 interface RoleProtectedRouteProps {
   children: ReactNode;
-  allowedRoles: ('admin' | 'salesperson' | 'user')[];
+  allowedRoles: ('admin' | 'manager' | 'salesperson' | 'user')[];
   fallbackMessage?: string;
 }
 
@@ -38,6 +38,8 @@ const RoleProtectedRoute = ({
               <ShoppingCart className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
             ) : profile?.role === 'salesperson' ? (
               <User className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+            ) : profile?.role === 'manager' ? (
+              <Shield className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
             ) : (
               <Shield className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
             )}
@@ -88,6 +90,8 @@ const getDefaultMessage = (role?: string) => {
       return 'Esta é uma área administrativa. Como cliente, você pode fazer pedidos através da loja.';
     case 'salesperson':
       return 'Você tem acesso limitado ao painel. Use as abas disponíveis para gerenciar vendas e orçamentos.';
+    case 'manager':
+      return 'Como gerente, você tem acesso a todas funcionalidades exceto gerenciamento de usuários.';
     default:
       return 'Você não tem permissão para acessar esta área.';
   }
