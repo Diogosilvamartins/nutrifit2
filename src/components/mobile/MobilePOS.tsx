@@ -142,7 +142,7 @@ export const MobilePOS = () => {
       <MobileHeader title="Ponto de Venda" />
       <OfflineIndicator />
       
-      <div className="p-4 space-y-4">
+      <div className="p-4 space-y-4 pb-28">
         {/* Scanner Mobile */}
         <MobileScanner onBarcodeScanned={handleBarcodeScanned} />
         
@@ -207,6 +207,23 @@ export const MobilePOS = () => {
               onPartialPaymentToggle={(enabled) => updateQuote({ has_partial_payment: enabled })}
             />
 
+            <div className="hidden">
+              <ActionButtons
+                onSaveQuote={handleSaveQuote}
+                onSaveSale={handleSaveSale}
+                onGeneratePDF={() => {}}
+                onSendWhatsApp={() => {}}
+                loading={loading}
+                hasQuoteNumber={!!quote.quote_number}
+                canSendWhatsApp={!!quote.customer_phone}
+              />
+            </div>
+          </>
+        )}
+      </div>
+      {cart.length > 0 && (
+        <div className="fixed inset-x-0 bottom-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="max-w-screen-sm mx-auto p-3 pb-[calc(env(safe-area-inset-bottom)+0.5rem)]">
             <ActionButtons
               onSaveQuote={handleSaveQuote}
               onSaveSale={handleSaveSale}
@@ -216,9 +233,9 @@ export const MobilePOS = () => {
               hasQuoteNumber={!!quote.quote_number}
               canSendWhatsApp={!!quote.customer_phone}
             />
-          </>
-        )}
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
