@@ -40,9 +40,9 @@ export const MobileScanner = ({ onBarcodeScanned, onPhotoTaken }: MobileScannerP
   }, []);
 
 const defaultVideoConstraints: MediaTrackConstraints = {
-  facingMode: { ideal: 'environment' },
-  width: { ideal: 1280 },
-  height: { ideal: 720 },
+  facingMode: 'environment',
+  width: { min: 640, ideal: 1280 },
+  height: { min: 480, ideal: 720 },
 };
 
 const [videoConstraints, setVideoConstraints] = useState<MediaTrackConstraints>(defaultVideoConstraints);
@@ -51,6 +51,7 @@ const [facing, setFacing] = useState<'environment' | 'user'>('environment');
 const { ref } = useZxing({
   onDecodeResult(result) {
     const scannedCode = result.getText();
+    console.log('Código detectado:', scannedCode);
     if (scannedCode && onBarcodeScanned) {
       onBarcodeScanned(scannedCode);
       setIsScannerOpen(false);
@@ -64,7 +65,7 @@ const { ref } = useZxing({
     console.error('Scanner error:', error);
     toast({
       title: "Erro no scanner",
-      description: "Não foi possível acessar a câmera. Verifique permissões.",
+      description: "Erro ao escanear. Tente novamente.",
       variant: "destructive"
     });
   },
@@ -72,7 +73,7 @@ const { ref } = useZxing({
   constraints: {
     video: videoConstraints,
   },
-  timeBetweenDecodingAttempts: 250,
+  timeBetweenDecodingAttempts: 100,
 });
 
   const handleTakePhoto = async () => {
@@ -95,6 +96,8 @@ const { ref } = useZxing({
   };
 
 const handleOpenScanner = async () => {
+  console.log('Abrindo scanner...');
+  
   // Preflight: check https and mediaDevices support
   if (!window.isSecureContext) {
     toast({
@@ -114,29 +117,15 @@ const handleOpenScanner = async () => {
   }
 
   try {
+    // Reset para constraints simples primeiro
+    setVideoConstraints(defaultVideoConstraints);
+    
     // Solicita permissão antecipadamente para garantir o prompt
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: 'environment' } },
+      video: { facingMode: 'environment' },
       audio: false,
     });
-
-    // Tenta selecionar explicitamente a câmera traseira
-    try {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoInputs = devices.filter((d) => d.kind === 'videoinput');
-      const backCam = videoInputs.find((d) => /back|trás|rear|environment/i.test(d.label));
-      if (backCam) {
-        setVideoConstraints({
-          ...defaultVideoConstraints,
-          deviceId: { exact: backCam.deviceId },
-        });
-      } else {
-        setVideoConstraints(defaultVideoConstraints);
-      }
-    } catch (_) {
-      // Silenciosamente mantém constraints padrão
-      setVideoConstraints(defaultVideoConstraints);
-    }
+    console.log('Permissão da câmera obtida');
 
     // Libera imediatamente; o hook assumirá depois
     stream.getTracks().forEach((t) => t.stop());
