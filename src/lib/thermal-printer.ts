@@ -237,7 +237,7 @@ export const printThermalReceiptSystem = (data: ThermalPrintData): void => {
               line-height: 1.2;
             }
             .receipt {
-              padding: 3mm 2mm 3mm; /* minimal bottom space to save paper */
+              padding: 2mm 2mm 5mm; /* 5mm bottom after last line */
               width: 100%;
               box-sizing: border-box;
             }
