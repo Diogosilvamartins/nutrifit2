@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nutrifit-v2';
+const CACHE_NAME = 'nutrifit-v3';
 const STATIC_CACHE = [
   '/',
   '/manifest.json',
