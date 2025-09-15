@@ -16,7 +16,7 @@ interface UserProfile {
   id: string;
   user_id: string;
   full_name: string | null;
-  role: 'admin' | 'manager' | 'user';
+  role: 'admin' | 'salesperson' | 'user';
   permissions: Record<string, boolean>;
   is_active: boolean;
   created_at: string;
@@ -42,7 +42,7 @@ const UserManagement = () => {
       if (error) throw error;
       setUsers((data || []).map(user => ({
         ...user,
-        role: user.role as 'admin' | 'manager' | 'user',
+        role: user.role as 'admin' | 'salesperson' | 'user',
         permissions: (user.permissions as Record<string, boolean>) || {}
       })));
     } catch (error) {
@@ -102,7 +102,7 @@ const UserManagement = () => {
     switch (role) {
       case 'admin':
         return <ShieldCheck className="h-4 w-4" />;
-      case 'manager':
+      case 'salesperson':
         return <Shield className="h-4 w-4" />;
       default:
         return <User className="h-4 w-4" />;
@@ -113,8 +113,8 @@ const UserManagement = () => {
     switch (role) {
       case 'admin':
         return <Badge variant="destructive">Administrador</Badge>;
-      case 'manager':
-        return <Badge variant="secondary">Gerente</Badge>;
+      case 'salesperson':
+        return <Badge variant="secondary">Vendedor</Badge>;
       default:
         return <Badge variant="outline">Usuário</Badge>;
     }
@@ -244,13 +244,13 @@ const EditUserForm = ({ user, onSave, onCancel }: EditUserFormProps) => {
 
       <div className="space-y-2">
         <Label htmlFor="role">Função</Label>
-        <Select value={role} onValueChange={(value: 'admin' | 'manager' | 'user') => setRole(value)}>
+        <Select value={role} onValueChange={(value: 'admin' | 'salesperson' | 'user') => setRole(value)}>
           <SelectTrigger>
             <SelectValue placeholder="Selecione uma função" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="admin">Administrador</SelectItem>
-            <SelectItem value="manager">Gerente</SelectItem>
+            <SelectItem value="salesperson">Vendedor</SelectItem>
             <SelectItem value="user">Usuário</SelectItem>
           </SelectContent>
         </Select>
