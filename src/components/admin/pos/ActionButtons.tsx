@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { FileText, Receipt, MessageCircle } from "lucide-react";
+import { FileText, Receipt, MessageCircle, Printer } from "lucide-react";
 import { ActionButtonsProps } from "@/types";
 
 export const ActionButtons = ({
@@ -7,6 +7,7 @@ export const ActionButtons = ({
   onSaveSale,
   onGeneratePDF,
   onSendWhatsApp,
+  onPrintThermal,
   loading,
   hasQuoteNumber,
   canSendWhatsApp
@@ -36,6 +37,13 @@ export const ActionButtons = ({
             variant="outline"
           >
             PDF
+          </Button>
+          <Button
+            onClick={onPrintThermal}
+            variant="outline"
+          >
+            <Printer className="w-4 h-4 mr-2" />
+            Imprimir
           </Button>
           <Button
             variant="outline"

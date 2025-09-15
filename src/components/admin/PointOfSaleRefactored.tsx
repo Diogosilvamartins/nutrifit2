@@ -214,6 +214,49 @@ export default function PointOfSaleRefactored() {
     });
   };
 
+  const handlePrintThermal = async () => {
+    try {
+      const printData = {
+        type: quote.quote_type as 'quote' | 'sale',
+        number: quote.quote_number || '',
+        customer: {
+          name: quote.customer_name,
+          phone: quote.customer_phone,
+          email: quote.customer_email,
+          cpf: quote.customer_cpf
+        },
+        items: cart.map(item => ({
+          name: item.product.name,
+          quantity: item.quantity,
+          price: item.product.price,
+          total: item.product.price * item.quantity
+        })),
+        subtotal: quote.subtotal,
+        discount: quote.discount_amount,
+        total: quote.total_amount,
+        paymentMethod: quote.payment_method,
+        validUntil: quote.valid_until,
+        notes: quote.notes
+      };
+
+      // Importar dinamicamente as funções de impressão
+      const { printThermalReceiptSystem } = await import('@/lib/thermal-printer');
+      printThermalReceiptSystem(printData);
+      
+      toast({
+        title: "Documento enviado para impressão",
+        description: "Verifique sua impressora térmica"
+      });
+    } catch (error) {
+      console.error('Erro ao imprimir:', error);
+      toast({
+        title: "Erro na impressão",
+        description: "Verifique se a impressora está conectada",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <ProductSearch 
@@ -276,6 +319,7 @@ export default function PointOfSaleRefactored() {
               onSaveQuote={handleSaveQuote}
               onSaveSale={handleSaveSale}
               onGeneratePDF={handleGeneratePDF}
+              onPrintThermal={handlePrintThermal}
               onSendWhatsApp={handleSendWhatsApp}
               loading={loading}
               hasQuoteNumber={!!quote.quote_number}

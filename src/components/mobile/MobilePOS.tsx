@@ -137,6 +137,44 @@ export const MobilePOS = () => {
     }
   };
 
+  const handlePrintThermal = async () => {
+    try {
+      const printData = {
+        type: quote.quote_type as 'quote' | 'sale',
+        number: quote.quote_number || '',
+        customer: {
+          name: quote.customer_name,
+          phone: quote.customer_phone,
+          email: quote.customer_email,
+          cpf: quote.customer_cpf
+        },
+        items: quote.products,
+        subtotal: quote.subtotal,
+        discount: quote.discount_amount,
+        total: quote.total_amount,
+        paymentMethod: quote.payment_method,
+        validUntil: quote.valid_until,
+        notes: quote.notes
+      };
+
+      // Importar dinamicamente as funções de impressão
+      const { printThermalReceiptSystem } = await import('@/lib/thermal-printer');
+      printThermalReceiptSystem(printData);
+      
+      toast({
+        title: "Documento enviado para impressão",
+        description: "Verifique sua impressora térmica"
+      });
+    } catch (error) {
+      console.error('Erro ao imprimir:', error);
+      toast({
+        title: "Erro na impressão",
+        description: "Verifique se a impressora está conectada",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <MobileHeader title="Ponto de Venda" />
@@ -212,6 +250,7 @@ export const MobilePOS = () => {
                 onSaveQuote={handleSaveQuote}
                 onSaveSale={handleSaveSale}
                 onGeneratePDF={() => {}}
+                onPrintThermal={handlePrintThermal}
                 onSendWhatsApp={() => {}}
                 loading={loading}
                 hasQuoteNumber={!!quote.quote_number}
@@ -228,6 +267,7 @@ export const MobilePOS = () => {
               onSaveQuote={handleSaveQuote}
               onSaveSale={handleSaveSale}
               onGeneratePDF={() => {}}
+              onPrintThermal={handlePrintThermal}
               onSendWhatsApp={() => {}}
               loading={loading}
               hasQuoteNumber={!!quote.quote_number}

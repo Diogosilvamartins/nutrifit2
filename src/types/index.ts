@@ -263,6 +263,7 @@ export interface ActionButtonsProps {
   onSaveSale: () => void;
   onGeneratePDF: () => void;
   onSendWhatsApp: () => void;
+  onPrintThermal: () => void;
   loading: boolean;
   hasQuoteNumber: boolean;
   canSendWhatsApp: boolean;
