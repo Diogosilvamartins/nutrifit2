@@ -71,7 +71,7 @@ const commands = {
   lineSeparator: '------------------------------------------------\n',
   
   // Corte de papel
-  cutPaper: GS + 'V' + '\x42' + '\x00',
+  cutPaper: GS + 'V' + '\x00',
   
   // Gaveta de dinheiro (se aplicável)
   openDrawer: ESC + 'p' + '\x00' + '\x19' + '\xfa'
@@ -191,9 +191,9 @@ export const printThermalReceipt = async (data: ThermalPrintData): Promise<void>
     await print(commands.boldOff);
     await print('Av. Rio Doce, 1075 - Ilha dos Araújos\n');
     await print('Tel: (33) 98404-3348\nPIX: 33984043348 - Diogo S. Martins\n');
-    await print(`${new Date().toLocaleString('pt-BR')}\n`);
+    await print(`${new Date().toLocaleString('pt-BR')}`);
     
-    // Cortar papel imediatamente após a data/hora
+    // Cortar papel imediatamente após a data/hora (sem quebra de linha extra)
     await print(commands.cutPaper);
     
     // Fechar conexão
