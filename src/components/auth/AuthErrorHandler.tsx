@@ -1,9 +1,8 @@
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 export const AuthErrorHandler = () => {
-  const { toast } = useToast();
 
   useEffect(() => {
     // Clear any corrupted auth tokens on mount
@@ -41,7 +40,7 @@ export const AuthErrorHandler = () => {
     );
 
     return () => subscription.unsubscribe();
-  }, [toast]);
+  }, []);
 
   return null;
 };
