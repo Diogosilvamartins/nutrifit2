@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { Camera, Scan, X } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Camera, Scan, X, Upload, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCamera } from "@/hooks/useCamera";
 import { useToast } from "@/hooks/use-toast";
 import { useZxing } from "react-zxing";
@@ -16,6 +17,27 @@ export const MobileScanner = ({ onBarcodeScanned, onPhotoTaken }: MobileScannerP
   const { takePhoto, isLoading } = useCamera();
   const { toast } = useToast();
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [showEmbeddedWarning, setShowEmbeddedWarning] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Detecta navegadores embutidos (Facebook, Instagram, etc.)
+  const isEmbeddedBrowser = () => {
+    const userAgent = navigator.userAgent.toLowerCase();
+    return userAgent.includes('fban') || // Facebook App
+           userAgent.includes('fbav') || // Facebook App
+           userAgent.includes('instagram') || // Instagram App
+           userAgent.includes('snapchat') || // Snapchat
+           userAgent.includes('tiktok') || // TikTok
+           userAgent.includes('whatsapp') || // WhatsApp
+           userAgent.includes('linkedin') || // LinkedIn
+           (userAgent.includes('iphone') && userAgent.includes('version') && !userAgent.includes('crios') && !userAgent.includes('fxios'));
+  };
+
+  useEffect(() => {
+    if (isEmbeddedBrowser()) {
+      setShowEmbeddedWarning(true);
+    }
+  }, []);
 
   const { ref } = useZxing({
     onDecodeResult(result) {
@@ -107,8 +129,34 @@ export const MobileScanner = ({ onBarcodeScanned, onPhotoTaken }: MobileScannerP
     setIsScannerOpen(false);
   };
 
+  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && onPhotoTaken) {
+      const photoUrl = URL.createObjectURL(file);
+      onPhotoTaken(photoUrl);
+      toast({
+        title: "Foto carregada!",
+        description: "A foto foi adicionada com sucesso."
+      });
+    }
+  };
+
+  const openPhotoUpload = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <>
+      {showEmbeddedWarning && (
+        <Alert className="mb-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            Detectamos que você está usando um navegador embutido (Facebook, Instagram, etc.). 
+            A câmera pode não funcionar. Abra no Chrome/Safari ou use a opção de upload abaixo.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -137,6 +185,24 @@ export const MobileScanner = ({ onBarcodeScanned, onPhotoTaken }: MobileScannerP
             <Camera className="w-4 h-4 mr-2" />
             {isLoading ? "Tirando foto..." : "Tirar Foto do Produto"}
           </Button>
+
+          <Button 
+            onClick={openPhotoUpload}
+            variant="secondary" 
+            className="w-full"
+            size="lg"
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Carregar Foto da Galeria
+          </Button>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handlePhotoUpload}
+            className="hidden"
+          />
         </CardContent>
       </Card>
 
