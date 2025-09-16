@@ -415,7 +415,7 @@ export default function PointOfSale() {
       return null;
     }
 
-    const message = `Olá ${quote.customer_name}! \n\n${quote.quote_type === "sale" ? "Recibo de Compra" : "Orçamento"} Nº: ${quote.quote_number}\n\n${cart.map(item => `• ${item.product.name} - Qtd: ${item.quantity} - ${formatCurrency(item.product.price * item.quantity)}`).join('\n')}\n\nSubtotal: ${formatCurrency(quote.subtotal)}\n${quote.include_shipping ? `Taxa de Entrega: ${formatCurrency(quote.shipping_cost)}` : ''}\n${quote.discount_amount > 0 ? `Desconto: ${formatCurrency(quote.discount_amount)}` : ''}\nTotal: ${formatCurrency(quote.total_amount)}\n\n${quote.quote_type === "quote" && quote.valid_until ? `Válido até: ${new Date(quote.valid_until).toLocaleDateString('pt-BR')}` : ''}\n\nNutri & Fit Suplementos`;
+    const message = `Olá ${quote.customer_name}! \n\n${quote.quote_type === "sale" ? "Recibo de Compra" : "Orçamento"} Nº: ${quote.quote_number}\n\n${cart.map(item => `• ${item.product.name} - Qtd: ${item.quantity} - ${formatCurrency(item.product.price * item.quantity)}`).join('\n')}\n\nSubtotal: ${formatCurrency(quote.subtotal)}\n${quote.include_shipping ? `Taxa de Entrega: ${formatCurrency(quote.shipping_cost)}` : ''}\n${quote.discount_amount > 0 ? `Desconto: ${formatCurrency(quote.discount_amount)}` : ''}\nTotal: ${formatCurrency(quote.total_amount)}\n\n${quote.quote_type === "quote" && quote.valid_until ? `Válido até: ${new Date(quote.valid_until).toLocaleDateString('pt-BR')}` : ''}\n\nNutri & Fit Suplementos\nAv. Rio Doce, 1075 - Ilha dos Araújos`;
 
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `whatsapp://send?phone=${phone}&text=${encodedMessage}`;
@@ -441,7 +441,7 @@ export default function PointOfSale() {
       return null;
     }
 
-    const message = `Olá ${quote.customer_name}! \n\n${quote.quote_type === "sale" ? "Recibo de Compra" : "Orçamento"} Nº: ${quote.quote_number}\n\n${cart.map(item => `• ${item.product.name} - Qtd: ${item.quantity} - ${formatCurrency(item.product.price * item.quantity)}`).join('\n')}\n\nSubtotal: ${formatCurrency(quote.subtotal)}\n${quote.include_shipping ? `Taxa de Entrega: ${formatCurrency(quote.shipping_cost)}` : ''}\n${quote.discount_amount > 0 ? `Desconto: ${formatCurrency(quote.discount_amount)}` : ''}\nTotal: ${formatCurrency(quote.total_amount)}\n\n${quote.quote_type === "quote" && quote.valid_until ? `Válido até: ${new Date(quote.valid_until).toLocaleDateString('pt-BR')}` : ''}\n\nNutri & Fit Suplementos`;
+    const message = `Olá ${quote.customer_name}! \n\n${quote.quote_type === "sale" ? "Recibo de Compra" : "Orçamento"} Nº: ${quote.quote_number}\n\n${cart.map(item => `• ${item.product.name} - Qtd: ${item.quantity} - ${formatCurrency(item.product.price * item.quantity)}`).join('\n')}\n\nSubtotal: ${formatCurrency(quote.subtotal)}\n${quote.include_shipping ? `Taxa de Entrega: ${formatCurrency(quote.shipping_cost)}` : ''}\n${quote.discount_amount > 0 ? `Desconto: ${formatCurrency(quote.discount_amount)}` : ''}\nTotal: ${formatCurrency(quote.total_amount)}\n\n${quote.quote_type === "quote" && quote.valid_until ? `Válido até: ${new Date(quote.valid_until).toLocaleDateString('pt-BR')}` : ''}\n\nNutri & Fit Suplementos\nAv. Rio Doce, 1075 - Ilha dos Araújos`;
 
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://web.whatsapp.com/send?phone=${phone}&text=${encodedMessage}`;
