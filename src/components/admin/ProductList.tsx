@@ -49,7 +49,7 @@ export default function ProductList({ onEdit, refreshTrigger }: ProductListProps
             company_name
           )
         `)
-        .order('created_at', { ascending: false });
+        .order('name', { ascending: true });
       
       if (error) throw error;
       setProducts(data || []);
