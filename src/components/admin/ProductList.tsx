@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,7 +7,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Pencil, Trash2, Search, Printer } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-import { printThermalReceiptSystem } from "@/lib/thermal-printer";
 
 interface Product {
   id: string;
@@ -32,10 +31,10 @@ interface ProductListProps {
 }
 
 export default function ProductList({ onEdit, refreshTrigger }: ProductListProps) {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [products, setProducts] = React.useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = React.useState<Product[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [searchTerm, setSearchTerm] = React.useState("");
   const { toast } = useToast();
   const { isAdmin } = useAuth();
 
@@ -66,11 +65,11 @@ export default function ProductList({ onEdit, refreshTrigger }: ProductListProps
     }
   };
 
-  useEffect(() => {
+  React.useEffect(() => {
     fetchProducts();
   }, [refreshTrigger]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const filtered = products.filter(product =>
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description?.toLowerCase().includes(searchTerm.toLowerCase())
