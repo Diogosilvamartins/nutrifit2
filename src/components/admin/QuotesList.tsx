@@ -986,7 +986,7 @@ export default function QuotesList() {
                       });
                       return;
                     }
-                    await handleConvertToSale(convertQuoteId, selectedPaymentMethod, saleDate);
+                    await handleConvertToSale(convertQuoteId!, selectedPaymentMethod, saleDate);
                     setSelectedPaymentMethod("");
                     setSaleDate(new Date());
                     setConvertQuoteId(null);
