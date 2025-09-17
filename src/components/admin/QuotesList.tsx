@@ -731,109 +731,21 @@ export default function QuotesList() {
                         )}
                         
                         {quote.quote_type === 'quote' && quote.status === 'pending' && (
-                          <Dialog>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <DialogTrigger asChild>
-                                  <Button
-                                    size="sm"
-                                    disabled={isLoading}
-                                    className="bg-green-600 hover:bg-green-700 text-white"
-                                  >
-                                    <ShoppingCart className="w-4 h-4" />
-                                  </Button>
-                                </DialogTrigger>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Converter em venda</p>
-                              </TooltipContent>
-                            </Tooltip>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Converter Orçamento em Venda</DialogTitle>
-                              </DialogHeader>
-                              <div className="space-y-4">
-                                <div className="space-y-2">
-                                  <label className="text-sm font-medium">Data da venda:</label>
-                                  <Popover>
-                                    <PopoverTrigger asChild>
-                                      <Button
-                                        variant="outline"
-                                        className={cn(
-                                          "w-full justify-start text-left font-normal",
-                                          !saleDate && "text-muted-foreground"
-                                        )}
-                                      >
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {saleDate ? format(saleDate, "dd/MM/yyyy") : <span>Selecionar data</span>}
-                                      </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                      <Calendar
-                                        mode="single"
-                                        selected={saleDate}
-                                        onSelect={(date) => date && setSaleDate(date)}
-                                        initialFocus
-                                        className="pointer-events-auto"
-                                      />
-                                    </PopoverContent>
-                                  </Popover>
-                                </div>
-                                
-                                <div className="space-y-2">
-                                  <label className="text-sm font-medium">Método de pagamento:</label>
-                                  <select
-                                    value={selectedPaymentMethod}
-                                    onChange={(e) => setSelectedPaymentMethod(e.target.value)}
-                                    className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
-                                    aria-label="Método de pagamento"
-                                  >
-                                    <option value="" disabled>Selecione o método de pagamento</option>
-                                    <option value="dinheiro">Dinheiro</option>
-                                    <option value="pix">PIX</option>
-                                    <option value="cartao_debito">Cartão de Débito</option>
-                                    <option value="cartao_credito">Cartão de Crédito</option>
-                                  </select>
-                                </div>
-                                
-                                <div className="flex gap-2">
-                                  <Button
-                                    variant="outline"
-                                    onClick={() => {
-                                      setSelectedPaymentMethod("");
-                                      setSaleDate(new Date());
-                                      const closeButton = document.querySelector('[data-radix-dialog-close]') as HTMLButtonElement;
-                                      if (closeButton) closeButton.click();
-                                    }}
-                                    className="flex-1"
-                                  >
-                                    Cancelar
-                                  </Button>
-                                  <Button
-                                    onClick={async () => {
-                                      if (!selectedPaymentMethod) {
-                                        toast({
-                                          title: "Erro",
-                                          description: "Selecione um método de pagamento",
-                                          variant: "destructive"
-                                        });
-                                        return;
-                                      }
-                                      await handleConvertToSale(quote.id, selectedPaymentMethod, saleDate);
-                                      setSelectedPaymentMethod("");
-                                      setSaleDate(new Date());
-                                      const closeButton = document.querySelector('[data-radix-dialog-close]') as HTMLButtonElement;
-                                      if (closeButton) closeButton.click();
-                                    }}
-                                    disabled={isLoading || !selectedPaymentMethod}
-                                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                                  >
-                                    {isLoading ? "Convertendo..." : "Converter em Venda"}
-                                  </Button>
-                                </div>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="sm"
+                                disabled={isLoading}
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                                onClick={() => setConvertQuoteId(quote.id)}
+                              >
+                                <ShoppingCart className="w-4 h-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Converter em venda</p>
+                            </TooltipContent>
+                          </Tooltip>
                          )}
                           
                           {quote.status !== 'canceled' && (
@@ -914,14 +826,193 @@ export default function QuotesList() {
         )}
       </div>
 
+      {/* Modals */}
+      {previewQuote && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setPreviewQuote(null)}>
+          <div className="bg-background rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold">
+                {previewQuote.quote_type === "sale" ? "Venda" : "Orçamento"} {previewQuote.quote_number}
+              </h2>
+              <Button variant="ghost" size="sm" onClick={() => setPreviewQuote(null)}>
+                <XCircle className="w-4 h-4" />
+              </Button>
+            </div>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <strong>Cliente:</strong> {previewQuote.customer_name}
+                </div>
+                <div>
+                  <strong>Telefone:</strong> {previewQuote.customer_phone || "-"}
+                </div>
+                <div>
+                  <strong>E-mail:</strong> {previewQuote.customer_email || "-"}
+                </div>
+                <div>
+                  <strong>CPF:</strong> {previewQuote.customer_cpf || "-"}
+                </div>
+                {previewQuote.payment_method && (
+                  <div>
+                    <strong>Método de Pagamento:</strong> {
+                      previewQuote.payment_method === 'dinheiro' ? 'Dinheiro' :
+                      previewQuote.payment_method === 'pix' ? 'PIX' :
+                      previewQuote.payment_method === 'cartao_debito' ? 'Cartão de Débito' :
+                      previewQuote.payment_method === 'cartao_credito' ? 'Cartão de Crédito' :
+                      previewQuote.payment_method
+                    }
+                  </div>
+                )}
+              </div>
+              
+              <div>
+                <strong>Produtos:</strong>
+                <div className="mt-2 space-y-1">
+                  {previewQuote.products.map((item: any, index: number) => (
+                    <div key={index} className="flex justify-between text-sm">
+                      <span>{item.name} x {item.quantity}</span>
+                      <span>{formatCurrency(item.total)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="border-t pt-2">
+                <div className="flex justify-between">
+                  <span>Subtotal:</span>
+                  <span>{formatCurrency(previewQuote.subtotal)}</span>
+                </div>
+                {previewQuote.shipping_cost && previewQuote.shipping_cost > 0 && (
+                  <div className="flex justify-between">
+                    <span>Taxa de Entrega:</span>
+                    <span>{formatCurrency(previewQuote.shipping_cost)}</span>
+                  </div>
+                )}
+                {previewQuote.discount_amount > 0 && (
+                  <div className="flex justify-between text-red-600">
+                    <span>Desconto:</span>
+                    <span>- {formatCurrency(previewQuote.discount_amount)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-bold">
+                  <span>Total:</span>
+                  <span>{formatCurrency(previewQuote.total_amount)}</span>
+                </div>
+              </div>
+              
+              {previewQuote.notes && (
+                <div>
+                  <strong>Observações:</strong>
+                  <p className="text-sm text-muted-foreground mt-1">{previewQuote.notes}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {convertQuoteId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setConvertQuoteId(null)}>
+          <div className="bg-background rounded-lg p-6 max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold">Converter Orçamento em Venda</h2>
+              <Button variant="ghost" size="sm" onClick={() => setConvertQuoteId(null)}>
+                <XCircle className="w-4 h-4" />
+              </Button>
+            </div>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Data da venda:</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !saleDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {saleDate ? format(saleDate, "dd/MM/yyyy") : <span>Selecionar data</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={saleDate}
+                      onSelect={(date) => date && setSaleDate(date)}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Método de pagamento:</label>
+                <select
+                  value={selectedPaymentMethod}
+                  onChange={(e) => setSelectedPaymentMethod(e.target.value)}
+                  className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                  aria-label="Método de pagamento"
+                >
+                  <option value="" disabled>Selecione o método de pagamento</option>
+                  <option value="dinheiro">Dinheiro</option>
+                  <option value="pix">PIX</option>
+                  <option value="cartao_debito">Cartão de Débito</option>
+                  <option value="cartao_credito">Cartão de Crédito</option>
+                </select>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSelectedPaymentMethod("");
+                    setSaleDate(new Date());
+                    setConvertQuoteId(null);
+                  }}
+                  className="flex-1"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={async () => {
+                    if (!selectedPaymentMethod) {
+                      toast({
+                        title: "Erro",
+                        description: "Selecione um método de pagamento",
+                        variant: "destructive"
+                      });
+                      return;
+                    }
+                    await handleConvertToSale(convertQuoteId, selectedPaymentMethod, saleDate);
+                    setSelectedPaymentMethod("");
+                    setSaleDate(new Date());
+                    setConvertQuoteId(null);
+                  }}
+                  disabled={isLoading || !selectedPaymentMethod}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                >
+                  {isLoading ? "Convertendo..." : "Converter em Venda"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {editingQuote && (
-        <Dialog open={!!editingQuote} onOpenChange={() => setEditingQuote(null)}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-            <DialogHeader className="flex-shrink-0">
-              <DialogTitle>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setEditingQuote(null)}>
+          <div className="bg-background rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4 flex-shrink-0">
+              <h2 className="text-lg font-bold">
                 Editar {editingQuote.quote_type === "sale" ? "Venda" : "Orçamento"} {editingQuote.quote_number}
-              </DialogTitle>
-            </DialogHeader>
+              </h2>
+              <Button variant="ghost" size="sm" onClick={() => setEditingQuote(null)}>
+                <XCircle className="w-4 h-4" />
+              </Button>
+            </div>
             <div className="flex-1 overflow-y-auto px-1">
               <EditQuoteForm 
                 quote={editingQuote}
@@ -930,8 +1021,8 @@ export default function QuotesList() {
                 isLoading={isLoading}
               />
             </div>
-          </DialogContent>
-        </Dialog>
+          </div>
+        </div>
       )}
     </TooltipProvider>
   );
