@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+// Using native select to avoid runtime issues with Radix Select
 import { 
   Dialog, 
   DialogContent, 
@@ -469,29 +469,37 @@ export default function QuotesList() {
                 />
               </div>
               
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="quote">Orçamentos</SelectItem>
-                  <SelectItem value="sale">Vendas</SelectItem>
-                </SelectContent>
-              </Select>
+              <div>
+                <label className="sr-only" htmlFor="filter-type">Tipo</label>
+                <select
+                  id="filter-type"
+                  value={typeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value)}
+                  className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                  aria-label="Filtrar por tipo"
+                >
+                  <option value="all">Todos</option>
+                  <option value="quote">Orçamentos</option>
+                  <option value="sale">Vendas</option>
+                </select>
+              </div>
               
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="pending">Pendente</SelectItem>
-                  <SelectItem value="approved">Aprovado</SelectItem>
-                  <SelectItem value="completed">Concluído</SelectItem>
-                  <SelectItem value="canceled">Cancelados</SelectItem>
-                </SelectContent>
-              </Select>
+              <div>
+                <label className="sr-only" htmlFor="filter-status">Status</label>
+                <select
+                  id="filter-status"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                  aria-label="Filtrar por status"
+                >
+                  <option value="all">Todos</option>
+                  <option value="pending">Pendente</option>
+                  <option value="approved">Aprovado</option>
+                  <option value="completed">Concluído</option>
+                  <option value="canceled">Cancelados</option>
+                </select>
+              </div>
               
               <Button onClick={fetchQuotes}>
                 Atualizar
@@ -856,17 +864,18 @@ export default function QuotesList() {
                                 
                                 <div className="space-y-2">
                                   <label className="text-sm font-medium">Método de pagamento:</label>
-                                  <Select onValueChange={setSelectedPaymentMethod} value={selectedPaymentMethod}>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Selecione o método de pagamento" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="dinheiro">Dinheiro</SelectItem>
-                                      <SelectItem value="pix">PIX</SelectItem>
-                                      <SelectItem value="cartao_debito">Cartão de Débito</SelectItem>
-                                      <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
-                                    </SelectContent>
-                                  </Select>
+                                  <select
+                                    value={selectedPaymentMethod}
+                                    onChange={(e) => setSelectedPaymentMethod(e.target.value)}
+                                    className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                                    aria-label="Método de pagamento"
+                                  >
+                                    <option value="" disabled>Selecione o método de pagamento</option>
+                                    <option value="dinheiro">Dinheiro</option>
+                                    <option value="pix">PIX</option>
+                                    <option value="cartao_debito">Cartão de Débito</option>
+                                    <option value="cartao_credito">Cartão de Crédito</option>
+                                  </select>
                                 </div>
                                 
                                 <div className="flex gap-2">
