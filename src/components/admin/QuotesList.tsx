@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,13 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 // Using native select to avoid runtime issues with Radix Select
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
-} from "@/components/ui/dialog";
+// Removed Radix Dialog import to avoid runtime hook errors
+
 import { 
   AlertDialog, 
   AlertDialogAction, 
@@ -91,6 +86,8 @@ export default function QuotesList() {
   const [isLoading, setIsLoading] = useState(false);
   const [saleDate, setSaleDate] = useState<Date>(new Date());
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("");
+  const [previewQuote, setPreviewQuote] = useState<Quote | null>(null);
+  const [convertQuoteId, setConvertQuoteId] = useState<string | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -557,99 +554,20 @@ export default function QuotesList() {
                     </div>
                     
                      <div className="flex gap-2">
-                        <Dialog>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <DialogTrigger asChild>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </Button>
-                              </DialogTrigger>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Visualizar detalhes</p>
-                            </TooltipContent>
-                          </Tooltip>
-                          <DialogContent className="max-w-2xl">
-                            <DialogHeader>
-                              <DialogTitle>
-                                {quote.quote_type === "sale" ? "Venda" : "Orçamento"} {quote.quote_number}
-                              </DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-4">
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <strong>Cliente:</strong> {quote.customer_name}
-                                </div>
-                                <div>
-                                  <strong>Telefone:</strong> {quote.customer_phone || "-"}
-                                </div>
-                                <div>
-                                  <strong>E-mail:</strong> {quote.customer_email || "-"}
-                                </div>
-                                <div>
-                                  <strong>CPF:</strong> {quote.customer_cpf || "-"}
-                                </div>
-                                {quote.payment_method && (
-                                  <div>
-                                    <strong>Método de Pagamento:</strong> {
-                                      quote.payment_method === 'dinheiro' ? 'Dinheiro' :
-                                      quote.payment_method === 'pix' ? 'PIX' :
-                                      quote.payment_method === 'cartao_debito' ? 'Cartão de Débito' :
-                                      quote.payment_method === 'cartao_credito' ? 'Cartão de Crédito' :
-                                      quote.payment_method
-                                    }
-                                  </div>
-                                )}
-                              </div>
-                              
-                              <div>
-                                <strong>Produtos:</strong>
-                                <div className="mt-2 space-y-1">
-                                  {quote.products.map((item: any, index: number) => (
-                                    <div key={index} className="flex justify-between text-sm">
-                                      <span>{item.name} x {item.quantity}</span>
-                                      <span>{formatCurrency(item.total)}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                              
-                               <div className="border-t pt-2">
-                                 <div className="flex justify-between">
-                                   <span>Subtotal:</span>
-                                   <span>{formatCurrency(quote.subtotal)}</span>
-                                 </div>
-                                 {quote.shipping_cost && quote.shipping_cost > 0 && (
-                                   <div className="flex justify-between">
-                                     <span>Taxa de Entrega:</span>
-                                     <span>{formatCurrency(quote.shipping_cost)}</span>
-                                   </div>
-                                 )}
-                                {quote.discount_amount > 0 && (
-                                  <div className="flex justify-between text-red-600">
-                                    <span>Desconto:</span>
-                                    <span>- {formatCurrency(quote.discount_amount)}</span>
-                                  </div>
-                                )}
-                                <div className="flex justify-between font-bold">
-                                  <span>Total:</span>
-                                  <span>{formatCurrency(quote.total_amount)}</span>
-                                </div>
-                              </div>
-                              
-                              {quote.notes && (
-                                <div>
-                                  <strong>Observações:</strong>
-                                  <p className="text-sm text-muted-foreground mt-1">{quote.notes}</p>
-                                </div>
-                              )}
-                            </div>
-                          </DialogContent>
-                        </Dialog>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setPreviewQuote(quote)}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Visualizar detalhes</p>
+                          </TooltipContent>
+                        </Tooltip>
                         
                         <Tooltip>
                           <TooltipTrigger asChild>
