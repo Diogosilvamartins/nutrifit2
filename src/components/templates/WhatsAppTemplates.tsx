@@ -93,7 +93,7 @@ export const WhatsAppTemplates = () => {
     try {
       if (selectedTemplate) {
         // Edit existing
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('whatsapp_templates')
           .update({
             name: editForm.name,
@@ -101,16 +101,12 @@ export const WhatsAppTemplates = () => {
             category: editForm.category,
             variables: variables
           })
-          .eq('id', selectedTemplate.id)
-          .select()
-          .single();
+          .eq('id', selectedTemplate.id);
 
         if (error) {
           console.error("Update error:", error);
           throw error;
         }
-
-        console.log("Template updated successfully:", data);
 
         // Update local state immediately
         setTemplates(prevTemplates => 
@@ -127,7 +123,7 @@ export const WhatsAppTemplates = () => {
         });
       } else {
         // Add new
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('whatsapp_templates')
           .insert([{
             name: editForm.name,
@@ -135,11 +131,12 @@ export const WhatsAppTemplates = () => {
             category: editForm.category,
             variables: variables,
             created_by: (await supabase.auth.getUser()).data.user?.id
-          }])
-          .select()
-          .single();
+          }]);
 
-        if (error) throw error;
+        if (error) {
+          console.error("Insert error:", error);
+          throw error;
+        }
 
         toast({
           title: "Template criado!",
