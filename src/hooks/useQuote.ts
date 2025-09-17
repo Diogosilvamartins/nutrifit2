@@ -15,7 +15,7 @@ const initialQuoteState: Quote = {
   total_amount: 0,
   quote_type: "quote",
   status: "pending",
-  valid_until: format(addDays(new Date(), 30), 'yyyy-MM-dd'),
+  valid_until: format(addDays(new Date(), 14), 'yyyy-MM-dd'),
   sale_date: format(new Date(), 'yyyy-MM-dd'),
   notes: "",
   payment_method: "",
