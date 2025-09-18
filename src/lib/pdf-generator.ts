@@ -88,8 +88,9 @@ export const generatePDF = async (data: PDFData): Promise<string> => {
   // Date (centered)
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
-  const saleDate = data.saleDate ? new Date(data.saleDate) : new Date();
-  const currentDate = `Data: ${saleDate.toLocaleDateString('pt-BR')}`;
+  // Para vendas, usar data atual (data do pagamento). Para orçamentos, usar saleDate se disponível
+  const displayDate = data.type === 'sale' ? new Date() : (data.saleDate ? new Date(data.saleDate) : new Date());
+  const currentDate = `Data: ${displayDate.toLocaleDateString('pt-BR')}`;
   doc.text(currentDate, centerText(currentDate, 8), currentY);
   currentY += 20;
   
@@ -237,8 +238,9 @@ export const generatePDF = async (data: PDFData): Promise<string> => {
   doc.text(footerText, centerText(footerText, 6), currentY);
   currentY += 8;
   
-  const saleDateTime = data.saleDate ? new Date(data.saleDate) : new Date();
-  const dateFooter = saleDateTime.toLocaleString('pt-BR');
+  // Para vendas, usar data atual (data do pagamento). Para orçamentos, usar saleDate se disponível
+  const footerDateTime = data.type === 'sale' ? new Date() : (data.saleDate ? new Date(data.saleDate) : new Date());
+  const dateFooter = footerDateTime.toLocaleString('pt-BR');
   doc.text(dateFooter, centerText(dateFooter, 6), currentY);
   
   return doc.output('dataurlstring');
