@@ -36,6 +36,13 @@ interface Quote {
   customer_phone?: string;
   customer_email?: string;
   customer_cpf?: string;
+  customer_zipcode?: string;
+  customer_street?: string;
+  customer_number?: string;
+  customer_complement?: string;
+  customer_neighborhood?: string;
+  customer_city?: string;
+  customer_state?: string;
   salesperson_id?: string;
   products: CartItem[];
   subtotal: number;
