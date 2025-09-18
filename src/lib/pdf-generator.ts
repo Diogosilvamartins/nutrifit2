@@ -3,6 +3,7 @@ import jsPDF from 'jspdf';
 interface PDFData {
   type: 'quote' | 'sale';
   number: string;
+  saleDate?: string;
   customer: {
     name: string;
     phone?: string;
@@ -87,7 +88,8 @@ export const generatePDF = async (data: PDFData): Promise<string> => {
   // Date (centered)
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
-  const currentDate = `Data: ${new Date().toLocaleDateString('pt-BR')}`;
+  const saleDate = data.saleDate ? new Date(data.saleDate) : new Date();
+  const currentDate = `Data: ${saleDate.toLocaleDateString('pt-BR')}`;
   doc.text(currentDate, centerText(currentDate, 8), currentY);
   currentY += 20;
   
@@ -235,7 +237,8 @@ export const generatePDF = async (data: PDFData): Promise<string> => {
   doc.text(footerText, centerText(footerText, 6), currentY);
   currentY += 8;
   
-  const dateFooter = new Date().toLocaleString('pt-BR');
+  const saleDateTime = data.saleDate ? new Date(data.saleDate) : new Date();
+  const dateFooter = saleDateTime.toLocaleString('pt-BR');
   doc.text(dateFooter, centerText(dateFooter, 6), currentY);
   
   return doc.output('dataurlstring');

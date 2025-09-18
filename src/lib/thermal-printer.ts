@@ -1,6 +1,7 @@
 interface ThermalPrintData {
   type: 'quote' | 'sale';
   number: string;
+  saleDate?: string;
   customer: {
     name: string;
     phone?: string;
@@ -116,7 +117,8 @@ export const printThermalReceipt = async (data: ThermalPrintData): Promise<void>
     await print(commands.fontNormal);
     
     // Data
-    await print(`${new Date().toLocaleDateString('pt-BR')}\n`);
+    const saleDate = data.saleDate ? new Date(data.saleDate) : new Date();
+    await print(`${saleDate.toLocaleDateString('pt-BR')}\n`);
     
     // CLIENTE
     await print(commands.alignLeft);
@@ -231,7 +233,8 @@ export const printThermalReceipt = async (data: ThermalPrintData): Promise<void>
     await print(commands.boldOff);
     await print('Av. Rio Doce, 1075 - Ilha dos Araújos\n');
     await print('Tel: (33) 98404-3348\nPIX: 33984043348 - Diogo S. Martins\n');
-    await print(`${new Date().toLocaleString('pt-BR')}`);
+    const saleDateTime = data.saleDate ? new Date(data.saleDate) : new Date();
+    await print(`${saleDateTime.toLocaleString('pt-BR')}`);
     
     // Cortar papel imediatamente após a data/hora (sem quebra de linha extra)
     await print(commands.cutPaper);
@@ -292,7 +295,7 @@ export const printThermalReceiptSystem = (data: ThermalPrintData): void => {
       <body>
         <div class="receipt">
           <div class="center bold large">${header} Nº ${data.number}</div>
-          <div class="center">${new Date().toLocaleDateString('pt-BR')}</div>
+          <div class="center">${data.saleDate ? new Date(data.saleDate).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR')}</div>
           
           <div class="bold">CLIENTE:</div>
           <div>${data.customer.name}</div>
@@ -343,7 +346,7 @@ export const printThermalReceiptSystem = (data: ThermalPrintData): void => {
           <div class="center">Av. Rio Doce, 1075 - Ilha dos Araújos</div>
           <div class="center">Tel: (33) 98404-3348</div>
           <div class="center">PIX: 33984043348 - Diogo S. Martins</div>
-          <div class="center">${new Date().toLocaleString('pt-BR')}</div>
+          <div class="center">${data.saleDate ? new Date(data.saleDate).toLocaleString('pt-BR') : new Date().toLocaleString('pt-BR')}</div>
         </div>
       </body>
     </html>

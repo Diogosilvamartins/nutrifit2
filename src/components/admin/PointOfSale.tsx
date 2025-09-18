@@ -380,6 +380,7 @@ export default function PointOfSale() {
       const pdf = await generatePDF({
         type: quote.quote_type,
         number: quote.quote_number,
+        saleDate: quote.sale_date,
         customer: {
           name: quote.customer_name,
           phone: quote.customer_phone,
