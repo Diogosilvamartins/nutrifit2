@@ -6,6 +6,13 @@ interface ThermalPrintData {
     phone?: string;
     email?: string;
     cpf?: string;
+    zipcode?: string;
+    street?: string;
+    number?: string;
+    complement?: string;
+    neighborhood?: string;
+    city?: string;
+    state?: string;
   };
   items: Array<{
     name: string;
@@ -122,6 +129,39 @@ export const printThermalReceipt = async (data: ThermalPrintData): Promise<void>
     }
     if (data.customer.cpf) {
       await print(`CPF: ${data.customer.cpf}\n`);
+    }
+    
+    // Endereço do cliente (se disponível)
+    if (data.customer.street || data.customer.city) {
+      if (data.customer.street) {
+        let addressLine = data.customer.street;
+        if (data.customer.number) {
+          addressLine += `, ${data.customer.number}`;
+        }
+        if (data.customer.complement) {
+          addressLine += ` - ${data.customer.complement}`;
+        }
+        await print(`${addressLine}\n`);
+      }
+      
+      if (data.customer.neighborhood || data.customer.city) {
+        let cityLine = '';
+        if (data.customer.neighborhood) {
+          cityLine = data.customer.neighborhood;
+        }
+        if (data.customer.city) {
+          cityLine += cityLine ? ` - ${data.customer.city}` : data.customer.city;
+        }
+        if (data.customer.state) {
+          cityLine += `/${data.customer.state}`;
+        }
+        if (data.customer.zipcode) {
+          cityLine += ` - CEP: ${data.customer.zipcode}`;
+        }
+        if (cityLine) {
+          await print(`${cityLine}\n`);
+        }
+      }
     }
     
     // Separador
@@ -258,6 +298,15 @@ export const printThermalReceiptSystem = (data: ThermalPrintData): void => {
           <div>${data.customer.name}</div>
           ${data.customer.phone ? `<div>Tel: ${formatPhone(data.customer.phone)}</div>` : ''}
           ${data.customer.cpf ? `<div>CPF: ${data.customer.cpf}</div>` : ''}
+          
+          ${data.customer.street || data.customer.city ? `
+            ${data.customer.street ? `
+              <div>${data.customer.street}${data.customer.number ? ', ' + data.customer.number : ''}${data.customer.complement ? ' - ' + data.customer.complement : ''}</div>
+            ` : ''}
+            ${data.customer.neighborhood || data.customer.city ? `
+              <div>${data.customer.neighborhood ? data.customer.neighborhood : ''}${data.customer.neighborhood && data.customer.city ? ' - ' : ''}${data.customer.city || ''}${data.customer.state ? '/' + data.customer.state : ''}${data.customer.zipcode ? ' - CEP: ' + data.customer.zipcode : ''}</div>
+            ` : ''}
+          ` : ''}
           
           <div class="separator"></div>
           <div class="bold">QTD PRODUTO                      VALOR</div>

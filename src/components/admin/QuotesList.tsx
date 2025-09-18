@@ -378,7 +378,14 @@ export default function QuotesList() {
           name: quote.customer_name,
           phone: quote.customer_phone,
           email: quote.customer_email,
-          cpf: quote.customer_cpf
+          cpf: quote.customer_cpf,
+          zipcode: quote.customer_zipcode,
+          street: quote.customer_street,
+          number: quote.customer_number,
+          complement: quote.customer_complement,
+          neighborhood: quote.customer_neighborhood,
+          city: quote.customer_city,
+          state: quote.customer_state
         },
         items: quote.products,
         subtotal: quote.subtotal,
@@ -599,7 +606,14 @@ export default function QuotesList() {
                                       name: quote.customer_name,
                                       phone: quote.customer_phone,
                                       email: quote.customer_email,
-                                      cpf: quote.customer_cpf
+                                      cpf: quote.customer_cpf,
+                                      zipcode: quote.customer_zipcode,
+                                      street: quote.customer_street,
+                                      number: quote.customer_number,
+                                      complement: quote.customer_complement,
+                                      neighborhood: quote.customer_neighborhood,
+                                      city: quote.customer_city,
+                                      state: quote.customer_state
                                     },
                                     items: quote.products,
                                     subtotal: quote.subtotal,

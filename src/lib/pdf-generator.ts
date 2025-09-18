@@ -8,6 +8,13 @@ interface PDFData {
     phone?: string;
     email?: string;
     cpf?: string;
+    zipcode?: string;
+    street?: string;
+    number?: string;
+    complement?: string;
+    neighborhood?: string;
+    city?: string;
+    state?: string;
   };
   items: Array<{
     name: string;
@@ -103,7 +110,45 @@ export const generatePDF = async (data: PDFData): Promise<string> => {
     doc.text(`CPF: ${data.customer.cpf}`, margin, currentY);
     currentY += 8;
   }
-  
+
+  // Endereço do cliente (se disponível)
+  if (data.customer.street || data.customer.city) {
+    let addressLine = '';
+    if (data.customer.street) {
+      addressLine = data.customer.street;
+      if (data.customer.number) {
+        addressLine += `, ${data.customer.number}`;
+      }
+      if (data.customer.complement) {
+        addressLine += ` - ${data.customer.complement}`;
+      }
+    }
+    if (addressLine) {
+      doc.text(addressLine, margin, currentY);
+      currentY += 8;
+    }
+    
+    if (data.customer.neighborhood || data.customer.city) {
+      let cityLine = '';
+      if (data.customer.neighborhood) {
+        cityLine = data.customer.neighborhood;
+      }
+      if (data.customer.city) {
+        cityLine += cityLine ? ` - ${data.customer.city}` : data.customer.city;
+      }
+      if (data.customer.state) {
+        cityLine += `/${data.customer.state}`;
+      }
+      if (data.customer.zipcode) {
+        cityLine += ` - CEP: ${data.customer.zipcode}`;
+      }
+      if (cityLine) {
+        doc.text(cityLine, margin, currentY);
+        currentY += 8;
+      }
+    }
+  }
+
   currentY += 10;
   
   // Separator line
