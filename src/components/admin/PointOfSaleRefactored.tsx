@@ -284,13 +284,27 @@ export default function PointOfSaleRefactored() {
             name: quote.customer_name,
             phone: quote.customer_phone,
             email: quote.customer_email,
-            cpf: quote.customer_cpf
+            cpf: quote.customer_cpf,
+            zipcode: quote.customer_zipcode,
+            street: quote.customer_street,
+            number: quote.customer_number,
+            complement: quote.customer_complement,
+            neighborhood: quote.customer_neighborhood,
+            city: quote.customer_city,
+            state: quote.customer_state
           }}
           onCustomerChange={(data) => updateQuote({
             customer_name: data.name || quote.customer_name,
             customer_phone: data.phone || quote.customer_phone,
             customer_email: data.email || quote.customer_email,
-            customer_cpf: data.cpf || quote.customer_cpf
+            customer_cpf: data.cpf || quote.customer_cpf,
+            customer_zipcode: data.zipcode || quote.customer_zipcode,
+            customer_street: data.street || quote.customer_street,
+            customer_number: data.number || quote.customer_number,
+            customer_complement: data.complement || quote.customer_complement,
+            customer_neighborhood: data.neighborhood || quote.customer_neighborhood,
+            customer_city: data.city || quote.customer_city,
+            customer_state: data.state || quote.customer_state
           })}
           salespeople={salespeople}
           selectedSalesperson={quote.salesperson_id}

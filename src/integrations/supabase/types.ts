@@ -727,11 +727,18 @@ export type Database = {
           cancellation_reason: string | null
           created_at: string
           created_by: string | null
+          customer_city: string | null
+          customer_complement: string | null
           customer_cpf: string | null
           customer_email: string | null
           customer_id: string | null
           customer_name: string
+          customer_neighborhood: string | null
+          customer_number: string | null
           customer_phone: string | null
+          customer_state: string | null
+          customer_street: string | null
+          customer_zipcode: string | null
           discount_amount: number
           id: string
           notes: string | null
@@ -756,11 +763,18 @@ export type Database = {
           cancellation_reason?: string | null
           created_at?: string
           created_by?: string | null
+          customer_city?: string | null
+          customer_complement?: string | null
           customer_cpf?: string | null
           customer_email?: string | null
           customer_id?: string | null
           customer_name: string
+          customer_neighborhood?: string | null
+          customer_number?: string | null
           customer_phone?: string | null
+          customer_state?: string | null
+          customer_street?: string | null
+          customer_zipcode?: string | null
           discount_amount?: number
           id?: string
           notes?: string | null
@@ -785,11 +799,18 @@ export type Database = {
           cancellation_reason?: string | null
           created_at?: string
           created_by?: string | null
+          customer_city?: string | null
+          customer_complement?: string | null
           customer_cpf?: string | null
           customer_email?: string | null
           customer_id?: string | null
           customer_name?: string
+          customer_neighborhood?: string | null
+          customer_number?: string | null
           customer_phone?: string | null
+          customer_state?: string | null
+          customer_street?: string | null
+          customer_zipcode?: string | null
           discount_amount?: number
           id?: string
           notes?: string | null
