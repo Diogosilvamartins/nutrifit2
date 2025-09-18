@@ -9,7 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { formatCPF, formatPhone } from "@/lib/validators";
 import { formatCurrency } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { Minus, Plus, Trash2, Search } from "lucide-react";
+import { Minus, Plus, Trash2, Search, MapPin } from "lucide-react";
+import { fetchAddressByCEP } from "@/lib/cep-service";
 import { format } from "date-fns";
 import { QuoteFormSection } from "./pos/QuoteFormSection";
 import { PaymentSplit } from "@/types";
@@ -36,6 +37,13 @@ interface Quote {
   customer_phone?: string;
   customer_email?: string;
   customer_cpf?: string;
+  customer_zipcode?: string;
+  customer_street?: string;
+  customer_number?: string;
+  customer_complement?: string;
+  customer_neighborhood?: string;
+  customer_city?: string;
+  customer_state?: string;
   products: QuoteItem[];
   subtotal: number;
   discount_amount: number;
@@ -67,12 +75,21 @@ export default function EditQuoteForm({ quote, onSave, onCancel, isLoading }: Ed
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [quoteProducts, setQuoteProducts] = useState<QuoteItem[]>(quote.products || []);
+  const [isSearchingCEP, setIsSearchingCEP] = useState(false);
+  const [cepTimeout, setCepTimeout] = useState<NodeJS.Timeout | null>(null);
   
   const [formData, setFormData] = useState({
     customer_name: quote.customer_name || "",
     customer_phone: quote.customer_phone || "",
     customer_email: quote.customer_email || "",
     customer_cpf: quote.customer_cpf || "",
+    customer_zipcode: quote.customer_zipcode || "",
+    customer_street: quote.customer_street || "",
+    customer_number: quote.customer_number || "",
+    customer_complement: quote.customer_complement || "",
+    customer_neighborhood: quote.customer_neighborhood || "",
+    customer_city: quote.customer_city || "",
+    customer_state: quote.customer_state || "",
     discount_amount: quote.discount_amount || 0,
     notes: quote.notes || "",
     valid_until: quote.valid_until || "",
@@ -111,6 +128,70 @@ export default function EditQuoteForm({ quote, onSave, onCancel, isLoading }: Ed
     } catch (error) {
       console.error("Error fetching payment splits:", error);
     }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (cepTimeout) {
+        clearTimeout(cepTimeout);
+      }
+    };
+  }, [cepTimeout]);
+
+  const searchAddressByCEP = async (cep: string) => {
+    if (!cep || cep.replace(/\D/g, '').length !== 8) return;
+    
+    setIsSearchingCEP(true);
+    try {
+      const addressData = await fetchAddressByCEP(cep);
+      
+      if (addressData) {
+        setFormData(prev => ({
+          ...prev,
+          customer_street: addressData.logradouro,
+          customer_neighborhood: addressData.bairro,
+          customer_city: addressData.localidade,
+          customer_state: addressData.uf,
+          customer_complement: addressData.complemento || prev.customer_complement
+        }));
+        
+        toast({
+          title: "Endereço encontrado!",
+          description: `${addressData.logradouro}, ${addressData.bairro} - ${addressData.localidade}/${addressData.uf}`,
+        });
+      } else {
+        toast({
+          title: "CEP não encontrado",
+          description: "Verifique o CEP digitado e tente novamente.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao buscar CEP:", error);
+      toast({
+        title: "Erro ao buscar CEP",
+        description: "Tente novamente em alguns instantes.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSearchingCEP(false);
+    }
+  };
+
+  const handleCEPChange = (cep: string) => {
+    setFormData(prev => ({ ...prev, customer_zipcode: cep }));
+    
+    // Limpar timeout anterior se existir
+    if (cepTimeout) {
+      clearTimeout(cepTimeout);
+    }
+    
+    // Criar novo timeout para busca
+    const timeout = setTimeout(() => {
+      searchAddressByCEP(cep);
+    }, 1000); // Aguarda 1s após parar de digitar
+    
+    setCepTimeout(timeout);
   };
 
   useEffect(() => {
@@ -247,6 +328,13 @@ export default function EditQuoteForm({ quote, onSave, onCancel, isLoading }: Ed
       total_amount: Math.max(0, total),
       customer_cpf: formData.customer_cpf ? formData.customer_cpf.replace(/\D/g, '') : "",
       customer_phone: formData.customer_phone ? formData.customer_phone.replace(/\D/g, '') : "",
+      customer_zipcode: formData.customer_zipcode ? formData.customer_zipcode.replace(/\D/g, '') : "",
+      customer_street: formData.customer_street || "",
+      customer_number: formData.customer_number || "",
+      customer_complement: formData.customer_complement || "",
+      customer_neighborhood: formData.customer_neighborhood || "",
+      customer_city: formData.customer_city || "",
+      customer_state: formData.customer_state || "",
       payment_splits: hasPartialPayment ? paymentSplits : [],
       has_partial_payment: hasPartialPayment,
       payment_method: hasPartialPayment ? "partial" : formData.payment_method
@@ -322,6 +410,102 @@ export default function EditQuoteForm({ quote, onSave, onCancel, isLoading }: Ed
               placeholder="000.000.000-00"
               maxLength={14}
             />
+          </div>
+        </div>
+        
+        {/* Endereço */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-muted-foreground" />
+            <Label className="text-sm font-medium">Endereço</Label>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="customer_zipcode">CEP</Label>
+              <div className="relative">
+                <Input
+                  id="customer_zipcode"
+                  value={formData.customer_zipcode || ''}
+                  onChange={(e) => handleCEPChange(e.target.value)}
+                  placeholder="00000-000"
+                  maxLength={9}
+                />
+                {isSearchingCEP && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <Search className="h-4 w-4 animate-spin text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Digite o CEP para buscar automaticamente
+              </p>
+            </div>
+            
+            <div className="md:col-span-2">
+              <Label htmlFor="customer_street">Logradouro</Label>
+              <Input
+                id="customer_street"
+                value={formData.customer_street || ''}
+                onChange={(e) => handleInputChange('customer_street', e.target.value)}
+                placeholder="Rua, Avenida, etc."
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <Label htmlFor="customer_number">Número</Label>
+              <Input
+                id="customer_number"
+                value={formData.customer_number || ''}
+                onChange={(e) => handleInputChange('customer_number', e.target.value)}
+                placeholder="123"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="customer_complement">Complemento</Label>
+              <Input
+                id="customer_complement"
+                value={formData.customer_complement || ''}
+                onChange={(e) => handleInputChange('customer_complement', e.target.value)}
+                placeholder="Apto, Bloco, etc."
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="customer_neighborhood">Bairro</Label>
+              <Input
+                id="customer_neighborhood"
+                value={formData.customer_neighborhood || ''}
+                onChange={(e) => handleInputChange('customer_neighborhood', e.target.value)}
+                placeholder="Centro, Vila..."
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="customer_city">Cidade</Label>
+              <Input
+                id="customer_city"
+                value={formData.customer_city || ''}
+                onChange={(e) => handleInputChange('customer_city', e.target.value)}
+                placeholder="São Paulo"
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <Label htmlFor="customer_state">Estado</Label>
+              <Input
+                id="customer_state"
+                value={formData.customer_state || ''}
+                onChange={(e) => handleInputChange('customer_state', e.target.value)}
+                placeholder="SP"
+                maxLength={2}
+              />
+            </div>
           </div>
         </div>
       </div>
