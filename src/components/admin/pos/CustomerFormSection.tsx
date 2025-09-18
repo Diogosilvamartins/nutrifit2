@@ -6,7 +6,8 @@ import { CustomerFormSectionProps } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Search } from "lucide-react";
+import { Search, MapPin } from "lucide-react";
+import { fetchAddressByCEP } from "@/lib/cep-service";
 
 export const CustomerFormSection = ({
   customerData,
@@ -18,7 +19,9 @@ export const CustomerFormSection = ({
   onSaleDateChange
 }: CustomerFormSectionProps) => {
   const [isSearching, setIsSearching] = useState(false);
+  const [isSearchingCEP, setIsSearchingCEP] = useState(false);
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [cepTimeout, setCepTimeout] = useState<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
   const searchCustomerByPhone = async (phone: string) => {
@@ -30,7 +33,7 @@ export const CustomerFormSection = ({
       
       const { data: customer, error } = await supabase
         .from('customers')
-        .select('name, email, cpf, phone')
+        .select('name, email, cpf, phone, zipcode, street, number, complement, neighborhood, city, state')
         .eq('phone', cleanPhone)
         .maybeSingle();
 
@@ -41,7 +44,14 @@ export const CustomerFormSection = ({
           name: customer.name,
           email: customer.email,
           cpf: customer.cpf,
-          phone: customer.phone
+          phone: customer.phone,
+          zipcode: customer.zipcode,
+          street: customer.street,
+          number: customer.number,
+          complement: customer.complement,
+          neighborhood: customer.neighborhood,
+          city: customer.city,
+          state: customer.state
         });
         
         toast({
@@ -53,6 +63,45 @@ export const CustomerFormSection = ({
       console.error("Erro ao buscar cliente:", error);
     } finally {
       setIsSearching(false);
+    }
+  };
+
+  const searchAddressByCEP = async (cep: string) => {
+    if (!cep || cep.replace(/\D/g, '').length !== 8) return;
+    
+    setIsSearchingCEP(true);
+    try {
+      const addressData = await fetchAddressByCEP(cep);
+      
+      if (addressData) {
+        onCustomerChange({
+          street: addressData.logradouro,
+          neighborhood: addressData.bairro,
+          city: addressData.localidade,
+          state: addressData.uf,
+          complement: addressData.complemento || customerData.complement
+        });
+        
+        toast({
+          title: "Endereço encontrado!",
+          description: `${addressData.logradouro}, ${addressData.bairro} - ${addressData.localidade}/${addressData.uf}`,
+        });
+      } else {
+        toast({
+          title: "CEP não encontrado",
+          description: "Verifique o CEP digitado e tente novamente.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao buscar CEP:", error);
+      toast({
+        title: "Erro ao buscar CEP",
+        description: "Tente novamente em alguns instantes.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSearchingCEP(false);
     }
   };
 
@@ -72,13 +121,32 @@ export const CustomerFormSection = ({
     setSearchTimeout(timeout);
   };
 
+  const handleCEPChange = (cep: string) => {
+    onCustomerChange({ zipcode: cep });
+    
+    // Limpar timeout anterior se existir
+    if (cepTimeout) {
+      clearTimeout(cepTimeout);
+    }
+    
+    // Criar novo timeout para busca
+    const timeout = setTimeout(() => {
+      searchAddressByCEP(cep);
+    }, 1000); // Aguarda 1s após parar de digitar
+    
+    setCepTimeout(timeout);
+  };
+
   useEffect(() => {
     return () => {
       if (searchTimeout) {
         clearTimeout(searchTimeout);
       }
+      if (cepTimeout) {
+        clearTimeout(cepTimeout);
+      }
     };
-  }, [searchTimeout]);
+  }, [searchTimeout, cepTimeout]);
 
   return (
     <Card>
@@ -133,6 +201,102 @@ export const CustomerFormSection = ({
               value={customerData.cpf || ''}
               onChange={(e) => onCustomerChange({ cpf: e.target.value })}
             />
+          </div>
+        </div>
+        
+        {/* Endereço */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-muted-foreground" />
+            <Label className="text-sm font-medium">Endereço</Label>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="customer_zipcode">CEP</Label>
+              <div className="relative">
+                <Input
+                  id="customer_zipcode"
+                  value={customerData.zipcode || ''}
+                  onChange={(e) => handleCEPChange(e.target.value)}
+                  placeholder="00000-000"
+                  maxLength={9}
+                />
+                {isSearchingCEP && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <Search className="h-4 w-4 animate-spin text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Digite o CEP para buscar automaticamente
+              </p>
+            </div>
+            
+            <div className="md:col-span-2">
+              <Label htmlFor="customer_street">Logradouro</Label>
+              <Input
+                id="customer_street"
+                value={customerData.street || ''}
+                onChange={(e) => onCustomerChange({ street: e.target.value })}
+                placeholder="Rua, Avenida, etc."
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <Label htmlFor="customer_number">Número</Label>
+              <Input
+                id="customer_number"
+                value={customerData.number || ''}
+                onChange={(e) => onCustomerChange({ number: e.target.value })}
+                placeholder="123"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="customer_complement">Complemento</Label>
+              <Input
+                id="customer_complement"
+                value={customerData.complement || ''}
+                onChange={(e) => onCustomerChange({ complement: e.target.value })}
+                placeholder="Apto, Bloco, etc."
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="customer_neighborhood">Bairro</Label>
+              <Input
+                id="customer_neighborhood"
+                value={customerData.neighborhood || ''}
+                onChange={(e) => onCustomerChange({ neighborhood: e.target.value })}
+                placeholder="Centro, Vila..."
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="customer_city">Cidade</Label>
+              <Input
+                id="customer_city"
+                value={customerData.city || ''}
+                onChange={(e) => onCustomerChange({ city: e.target.value })}
+                placeholder="São Paulo"
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <Label htmlFor="customer_state">Estado</Label>
+              <Input
+                id="customer_state"
+                value={customerData.state || ''}
+                onChange={(e) => onCustomerChange({ state: e.target.value })}
+                placeholder="SP"
+                maxLength={2}
+              />
+            </div>
           </div>
         </div>
         

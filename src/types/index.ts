@@ -235,6 +235,13 @@ export interface CustomerFormSectionProps {
     phone?: string;
     email?: string;
     cpf?: string;
+    zipcode?: string;
+    street?: string;
+    number?: string;
+    complement?: string;
+    neighborhood?: string;
+    city?: string;
+    state?: string;
   };
   onCustomerChange: (data: Partial<CustomerFormSectionProps['customerData']>) => void;
   salespeople: Profile[];
