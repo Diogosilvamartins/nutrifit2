@@ -143,6 +143,7 @@ export const MobilePOS = () => {
         type: quote.quote_type as 'quote' | 'sale',
         number: quote.quote_number || '',
         saleDate: quote.sale_date,
+        quoteDate: quote.created_at,
         customer: {
           name: quote.customer_name,
           phone: quote.customer_phone,

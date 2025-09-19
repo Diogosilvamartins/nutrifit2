@@ -607,10 +607,11 @@ export default function QuotesList() {
                               onClick={() => {
                                 console.log('Botão de impressão clicado');
                                 try {
-                                  const printData = {
-                                    type: quote.quote_type,
-                                    number: quote.quote_number,
-                                    saleDate: quote.sale_date,
+                                   const printData = {
+                                     type: quote.quote_type,
+                                     number: quote.quote_number,
+                                     saleDate: quote.sale_date,
+                                     quoteDate: quote.created_at,
                                     customer: {
                                       name: quote.customer_name,
                                       phone: quote.customer_phone,
