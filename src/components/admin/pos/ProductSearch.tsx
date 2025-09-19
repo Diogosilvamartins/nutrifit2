@@ -97,7 +97,7 @@ export const ProductSearch = ({ onAddToCart, onBarcodeSearch }: ProductSearchPro
           />
         </div>
       </CardHeader>
-      <CardContent className="max-h-96 overflow-y-auto">
+      <CardContent className="max-h-[600px] overflow-y-auto">
         <div className="grid gap-2">
           {filteredProducts.map((product) => (
             <div
