@@ -48,16 +48,12 @@ export default function QuickCustomerForm({ onSuccess, onCancel }: QuickCustomer
 
     setLoading(true);
     try {
-      const customerData = {
-        name: name.trim(),
-        phone: phone.replace(/\D/g, ''),
-        lead_source: 'manual',
-        lead_status: 'new'
-      };
-
-      const { error } = await supabase
-        .from('customers')
-        .insert(customerData);
+      // Use secure RPC function for customer creation
+      const { data: newCustomerId, error } = await supabase
+        .rpc('create_customer_safe', {
+          p_name: name.trim(),
+          p_phone: phone.replace(/\D/g, '')
+        });
 
       if (error) throw error;
 

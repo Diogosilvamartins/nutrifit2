@@ -46,18 +46,20 @@ export default function CustomerList({ onEdit, refreshTrigger }: CustomerListPro
   const fetchCustomers = async () => {
     setLoading(true);
     try {
+      // Use secure RPC function instead of direct table access
       const { data, error } = await supabase
-        .from('customers')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .rpc('get_customers_rpc');
 
       if (error) throw error;
 
-      setCustomers(data || []);
+      // Parse the JSON response from the RPC function and convert to Customer array
+      const customersData = (data as any[]) || [];
+      setCustomers(customersData as Customer[]);
     } catch (error) {
       console.error("Error fetching customers:", error);
       toast({
         title: "Erro ao carregar clientes",
+        description: "Você pode não ter permissão para visualizar clientes.",
         variant: "destructive"
       });
     } finally {

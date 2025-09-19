@@ -167,7 +167,7 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
       };
 
       if (customer?.id) {
-        // Update existing customer
+        // Update existing customer - only admins and managers can do this via direct table access
         const { error } = await supabase
           .from('customers')
           .update(customerData)
@@ -180,10 +180,22 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
           description: "Dados do cliente foram atualizados com sucesso."
         });
       } else {
-        // Create new customer
-        const { error } = await supabase
-          .from('customers')
-          .insert(customerData);
+        // Create new customer using secure function
+        const { data: newCustomerId, error } = await supabase
+          .rpc('create_customer_safe', {
+            p_name: customerData.name,
+            p_email: customerData.email,
+            p_phone: customerData.phone,
+            p_cpf: customerData.cpf,
+            p_zipcode: customerData.zipcode,
+            p_street: customerData.street,
+            p_number: customerData.number,
+            p_complement: customerData.complement,
+            p_neighborhood: customerData.neighborhood,
+            p_city: customerData.city,
+            p_state: customerData.state,
+            p_notes: customerData.notes
+          });
 
         if (error) throw error;
 

@@ -1112,22 +1112,7 @@ export type Database = {
       }
     }
     Views: {
-      secure_customers: {
-        Row: {
-          access_level: string | null
-          city: string | null
-          cpf: string | null
-          created_at: string | null
-          created_by: string | null
-          email: string | null
-          id: string | null
-          lead_status: string | null
-          name: string | null
-          phone: string | null
-          state: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       adjust_cash_balance: {
@@ -1244,6 +1229,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_customer_rpc: {
+        Args: { customer_id: string }
+        Returns: Json
+      }
       get_customer_safe_data: {
         Args: { customer_id: string }
         Returns: {
@@ -1283,6 +1272,10 @@ export type Database = {
           phone: string
           state: string
         }[]
+      }
+      get_customers_rpc: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       get_or_create_customer: {
         Args: {
