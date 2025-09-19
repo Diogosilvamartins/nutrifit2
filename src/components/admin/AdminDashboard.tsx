@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { 
   ShoppingCart, 
   Package, 
   Users, 
   DollarSign,
   TrendingUp,
-  AlertTriangle
+  AlertTriangle,
+  RefreshCw
 } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 
@@ -35,6 +37,7 @@ export function AdminDashboard() {
   }, [])
 
   const loadDashboardStats = async () => {
+    setLoading(true)
     try {
       // Total de produtos
       const { count: productsCount } = await supabase
@@ -46,10 +49,17 @@ export function AdminDashboard() {
         .from('customers')
         .select('*', { count: 'exact', head: true })
 
-      // Total de pedidos
+      // Total de pedidos (orders)
       const { count: ordersCount } = await supabase
         .from('orders')
         .select('*', { count: 'exact', head: true })
+
+      // Total de vendas (quotes com tipo sale e status completed)
+      const { count: quoteSalesCount } = await supabase
+        .from('quotes')
+        .select('*', { count: 'exact', head: true })
+        .eq('quote_type', 'sale')
+        .eq('status', 'completed')
 
       // Produtos com estoque baixo (assumindo min_stock_alert)
       const { count: lowStockCount } = await supabase
@@ -57,19 +67,40 @@ export function AdminDashboard() {
         .select('*', { count: 'exact', head: true })
         .lt('stock_quantity', 10)
 
-      // Vendas de hoje
+      // Vendas de hoje - considerar tanto created_at quanto sale_date
       const today = new Date().toISOString().split('T')[0]
+      
+      // Vendas de hoje via orders
       const { count: todayOrdersCount } = await supabase
         .from('orders')
         .select('*', { count: 'exact', head: true })
         .gte('created_at', today)
 
+      // Vendas de hoje via quotes (created_at hoje)
+      const { count: todayQuotesCreatedCount } = await supabase
+        .from('quotes')
+        .select('*', { count: 'exact', head: true })
+        .eq('quote_type', 'sale')
+        .eq('status', 'completed')
+        .gte('created_at', today)
+
+      // Vendas de hoje via quotes (sale_date hoje)
+      const { count: todayQuotesSaleDateCount } = await supabase
+        .from('quotes')
+        .select('*', { count: 'exact', head: true })
+        .eq('quote_type', 'sale')
+        .eq('status', 'completed')
+        .eq('sale_date', today)
+
+      const totalSalesCount = (ordersCount || 0) + (quoteSalesCount || 0)
+      const totalTodaySales = (todayOrdersCount || 0) + (todayQuotesCreatedCount || 0) + (todayQuotesSaleDateCount || 0)
+
       setStats({
-        totalSales: ordersCount || 0,
+        totalSales: totalSalesCount,
         totalProducts: productsCount || 0,
         totalCustomers: customersCount || 0,
         lowStockProducts: lowStockCount || 0,
-        todaySales: todayOrdersCount || 0,
+        todaySales: totalTodaySales,
         pendingOrders: 0 // Implementar se houver status de pedidos
       })
     } catch (error) {
@@ -140,9 +171,21 @@ export function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold">Dashboard</h2>
-        <p className="text-muted-foreground">Visão geral do sistema Nutri & Fit</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Dashboard</h2>
+          <p className="text-muted-foreground">Visão geral do sistema Nutri & Fit</p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={loadDashboardStats}
+          disabled={loading}
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          Atualizar
+        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
