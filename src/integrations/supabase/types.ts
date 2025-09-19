@@ -1112,7 +1112,22 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      secure_customers: {
+        Row: {
+          access_level: string | null
+          city: string | null
+          cpf: string | null
+          created_at: string | null
+          created_by: string | null
+          email: string | null
+          id: string | null
+          lead_status: string | null
+          name: string | null
+          phone: string | null
+          state: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       adjust_cash_balance: {
@@ -1150,6 +1165,23 @@ export type Database = {
       }
       convert_to_brazil_timezone: {
         Args: { input_timestamp: string }
+        Returns: string
+      }
+      create_customer_safe: {
+        Args: {
+          p_city?: string
+          p_complement?: string
+          p_cpf?: string
+          p_email?: string
+          p_name: string
+          p_neighborhood?: string
+          p_notes?: string
+          p_number?: string
+          p_phone?: string
+          p_state?: string
+          p_street?: string
+          p_zipcode?: string
+        }
         Returns: string
       }
       create_data_backup: {
@@ -1211,6 +1243,46 @@ export type Database = {
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_customer_safe_data: {
+        Args: { customer_id: string }
+        Returns: {
+          city: string
+          complement: string
+          cpf: string
+          created_at: string
+          created_by: string
+          email: string
+          gender: string
+          id: string
+          lead_source: string
+          lead_status: string
+          name: string
+          neighborhood: string
+          notes: string
+          number: string
+          phone: string
+          state: string
+          street: string
+          updated_at: string
+          zipcode: string
+        }[]
+      }
+      get_customers_list: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          access_level: string
+          city: string
+          cpf: string
+          created_at: string
+          created_by: string
+          email: string
+          id: string
+          lead_status: string
+          name: string
+          phone: string
+          state: string
+        }[]
       }
       get_or_create_customer: {
         Args: {
