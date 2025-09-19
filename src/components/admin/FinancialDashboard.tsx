@@ -521,9 +521,48 @@ export default function FinancialDashboard() {
     const canceledSales = canceledQuotes?.length || 0;
     const canceledAmount = canceledQuotes?.reduce((sum, quote) => sum + Number(quote.total_amount), 0) || 0;
 
+    // Calculate bank position from PIX and card sales
+    let bankPosition = 0;
+    
+    // Para hoje, buscar vendas não-dinheiro por sale_date = hoje OU created_at >= hoje
+    if (period === "today") {
+      const { data: bankSalesBySaleDate } = await supabase
+        .from('quotes')
+        .select('id, total_amount, payment_method')
+        .eq('quote_type', 'sale')
+        .eq('status', 'completed')
+        .eq('sale_date', todayString)
+        .in('payment_method', ['pix', 'cartao_debito', 'cartao_credito']);
+        
+      const { data: bankSalesByCreatedAt } = await supabase
+        .from('quotes')
+        .select('id, total_amount, payment_method')
+        .eq('quote_type', 'sale')
+        .eq('status', 'completed')
+        .gte('created_at', startDate.toISOString())
+        .in('payment_method', ['pix', 'cartao_debito', 'cartao_credito']);
+      
+      // Combinar e remover duplicatas
+      const allBankSales = [...(bankSalesBySaleDate || []), ...(bankSalesByCreatedAt || [])];
+      const uniqueBankSales = allBankSales.filter((sale, index, self) => 
+        index === self.findIndex(s => s.id === sale.id)
+      );
+      
+      bankPosition = uniqueBankSales.reduce((sum, sale) => sum + Number(sale.total_amount), 0);
+    } else {
+      const { data: bankSales } = await supabase
+        .from('quotes')
+        .select('total_amount, payment_method')
+        .eq('quote_type', 'sale')
+        .eq('status', 'completed')
+        .gte('created_at', startDate.toISOString())
+        .in('payment_method', ['pix', 'cartao_debito', 'cartao_credito']);
+      
+      bankPosition = bankSales?.reduce((sum, sale) => sum + Number(sale.total_amount), 0) || 0;
+    }
+
     // Use real cash data if available, otherwise fallback to 0
     const cashPosition = cashData && cashData.length > 0 ? Number(cashData[0].current_balance) : 0;
-    const bankPosition = cashData && cashData.length > 0 ? Number(cashData[0].bank_balance) : 0;
 
     setSummary({
       totalSales: currentSales,
