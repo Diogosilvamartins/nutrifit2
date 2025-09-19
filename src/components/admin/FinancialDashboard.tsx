@@ -118,12 +118,48 @@ export default function FinancialDashboard() {
         daysBack = 30;
     }
 
-    // Fetch from quotes (in-store sales)
-    const { data: quotes, error: quotesError } = await supabase
-      .from('quotes')
-      .select('created_at, total_amount, quote_type, status')
-      .eq('quote_type', 'sale')
-      .gte('created_at', startDate.toISOString());
+    const todayString = today.toISOString().split('T')[0];
+
+    // Fetch from quotes (in-store sales) - considerar tanto created_at quanto sale_date
+    let quotes: any[] = [];
+    let quotesError: any = null;
+
+    if (period === "today") {
+      // Para hoje, buscar por sale_date = hoje OU created_at >= hoje
+      const { data: quotesBySaleDate, error: err1 } = await supabase
+        .from('quotes')
+        .select('id, created_at, sale_date, total_amount, quote_type, status')
+        .eq('quote_type', 'sale')
+        .eq('status', 'completed')
+        .eq('sale_date', todayString);
+        
+      const { data: quotesByCreatedAt, error: err2 } = await supabase
+        .from('quotes')
+        .select('id, created_at, sale_date, total_amount, quote_type, status')
+        .eq('quote_type', 'sale')
+        .eq('status', 'completed')
+        .gte('created_at', startDate.toISOString());
+      
+      quotesError = err1 || err2;
+      
+      if (!quotesError) {
+        // Combinar e remover duplicatas
+        const allQuotes = [...(quotesBySaleDate || []), ...(quotesByCreatedAt || [])];
+        quotes = allQuotes.filter((quote, index, self) => 
+          index === self.findIndex(q => q.id === quote.id)
+        );
+      }
+    } else {
+      const { data: quotesData, error } = await supabase
+        .from('quotes')
+        .select('id, created_at, sale_date, total_amount, quote_type, status')
+        .eq('quote_type', 'sale')
+        .eq('status', 'completed')
+        .gte('created_at', startDate.toISOString());
+      
+      quotes = quotesData || [];
+      quotesError = error;
+    }
 
     // Fetch from orders (online sales)
     const { data: orders, error: ordersError } = await supabase
@@ -298,6 +334,7 @@ export default function FinancialDashboard() {
 
   const fetchSummary = async () => {
     const today = new Date();
+    const todayString = today.toISOString().split('T')[0];
     let startDate = new Date();
     let prevStartDate = new Date();
     let prevEndDate = new Date();
@@ -333,11 +370,45 @@ export default function FinancialDashboard() {
     }
 
     // Current period data with products details
-    const { data: currentQuotes, error: currentError } = await supabase
-      .from('quotes')
-      .select('total_amount, quote_type, status, products')
-      .eq('quote_type', 'sale')
-      .gte('created_at', startDate.toISOString());
+    let currentQuotes: any[] = [];
+    let currentError: any = null;
+
+    if (period === "today") {
+      // Para hoje, buscar por sale_date = hoje OU created_at >= hoje
+      const { data: quotesBySaleDate, error: err1 } = await supabase
+        .from('quotes')
+        .select('id, total_amount, quote_type, status, products, sale_date')
+        .eq('quote_type', 'sale')
+        .eq('status', 'completed')
+        .eq('sale_date', todayString);
+        
+      const { data: quotesByCreatedAt, error: err2 } = await supabase
+        .from('quotes')
+        .select('id, total_amount, quote_type, status, products, sale_date')
+        .eq('quote_type', 'sale')
+        .eq('status', 'completed')
+        .gte('created_at', startDate.toISOString());
+      
+      currentError = err1 || err2;
+      
+      if (!currentError) {
+        // Combinar e remover duplicatas
+        const allQuotes = [...(quotesBySaleDate || []), ...(quotesByCreatedAt || [])];
+        currentQuotes = allQuotes.filter((quote, index, self) => 
+          index === self.findIndex(q => q.id === quote.id)
+        );
+      }
+    } else {
+      const { data: quotesData, error } = await supabase
+        .from('quotes')
+        .select('total_amount, quote_type, status, products')
+        .eq('quote_type', 'sale')
+        .eq('status', 'completed')
+        .gte('created_at', startDate.toISOString());
+      
+      currentQuotes = quotesData || [];
+      currentError = error;
+    }
 
     const { data: currentOrders, error: ordersError } = await supabase
       .from('orders')
@@ -361,7 +432,6 @@ export default function FinancialDashboard() {
       .gte('created_at', startDate.toISOString());
 
     // Get cash position for today
-    const todayString = today.toISOString().split('T')[0];
     const { data: cashData, error: cashError } = await supabase
       .rpc('get_cash_summary_for_date', { target_date: todayString });
 
