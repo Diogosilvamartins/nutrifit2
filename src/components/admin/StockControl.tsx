@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, ArrowUp, ArrowDown, RotateCcw, Scan } from "lucide-react";
+import { Package, ArrowUp, ArrowDown, RotateCcw, Scan, Edit, X } from "lucide-react";
 import InventoryCheck from "./InventoryCheck";
 
 interface Product {
@@ -57,6 +57,7 @@ export default function StockMovementForm({ onSuccess }: StockMovementFormProps)
   const [movements, setMovements] = useState<StockMovement[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [editingMovement, setEditingMovement] = useState<StockMovement | null>(null);
   const [formData, setFormData] = useState({
     product_id: "",
     movement_type: "entrada" as "entrada" | "saida",
@@ -138,66 +139,125 @@ export default function StockMovementForm({ onSuccess }: StockMovementFormProps)
     setLoading(true);
 
     try {
-      // Check stock availability for saida movements
-      if (formData.movement_type === "saida") {
-        const { data: stockCheck } = await supabase
-          .rpc('check_available_stock', {
-            product_uuid: formData.product_id,
-            required_quantity: formData.quantity
-          });
+      if (editingMovement) {
+        // Update existing movement
+        const { error } = await supabase
+          .from('stock_movements')
+          .update({
+            quantity: formData.quantity,
+            unit_cost: formData.unit_cost,
+            batch_number: formData.batch_number,
+            expiry_date: formData.expiry_date,
+            reference_type: formData.reference_type,
+            supplier_id: formData.supplier_id,
+            notes: formData.notes,
+            remaining_quantity: formData.movement_type === "entrada" ? formData.quantity : 0,
+          })
+          .eq('id', editingMovement.id);
+        
+        if (error) throw error;
+        
+        toast({ 
+          title: "✅ Movimentação atualizada!",
+          description: "Os dados da movimentação foram atualizados com sucesso."
+        });
+        
+        setEditingMovement(null);
+      } else {
+        // Check stock availability for saida movements
+        if (formData.movement_type === "saida") {
+          const { data: stockCheck } = await supabase
+            .rpc('check_available_stock', {
+              product_uuid: formData.product_id,
+              required_quantity: formData.quantity
+            });
 
-        if (!stockCheck) {
-          toast({
-            title: "Estoque insuficiente",
-            description: "Não há estoque suficiente para esta movimentação.",
-            variant: "destructive"
-          });
-          setLoading(false);
-          return;
+          if (!stockCheck) {
+            toast({
+              title: "Estoque insuficiente",
+              description: "Não há estoque suficiente para esta movimentação.",
+              variant: "destructive"
+            });
+            setLoading(false);
+            return;
+          }
         }
-      }
 
-      const { error } = await supabase
-        .from('stock_movements')
-        .insert([{
-          ...formData,
-          remaining_quantity: formData.movement_type === "entrada" ? formData.quantity : 0,
-          user_id: (await supabase.auth.getUser()).data.user?.id
-        }]);
-      
-      if (error) throw error;
-      
-      toast({ 
-        title: "✅ Movimentação registrada!",
-        description: `${formData.movement_type === 'entrada' ? 'Entrada' : 'Saída'} de ${formData.quantity} unidades registrada.`
-      });
+        const { error } = await supabase
+          .from('stock_movements')
+          .insert([{
+            ...formData,
+            remaining_quantity: formData.movement_type === "entrada" ? formData.quantity : 0,
+            user_id: (await supabase.auth.getUser()).data.user?.id
+          }]);
+        
+        if (error) throw error;
+        
+        toast({ 
+          title: "✅ Movimentação registrada!",
+          description: `${formData.movement_type === 'entrada' ? 'Entrada' : 'Saída'} de ${formData.quantity} unidades registrada.`
+        });
+      }
       
       // Reset form
-      setFormData({
-        product_id: "",
-        movement_type: "entrada",
-        quantity: 0,
-        unit_cost: 0,
-        batch_number: "",
-        expiry_date: "",
-        reference_type: "compra",
-        supplier_id: "",
-        notes: "",
-      });
+      resetForm();
       
       fetchProducts();
       fetchMovements();
       onSuccess();
     } catch (error) {
-      console.error("Error creating movement:", error);
+      console.error("Error saving movement:", error);
       toast({
-        title: "Erro ao registrar movimentação",
+        title: editingMovement ? "Erro ao atualizar movimentação" : "Erro ao registrar movimentação",
         description: error instanceof Error ? error.message : "Tente novamente.",
         variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      product_id: "",
+      movement_type: "entrada",
+      quantity: 0,
+      unit_cost: 0,
+      batch_number: "",
+      expiry_date: "",
+      reference_type: "compra",
+      supplier_id: "",
+      notes: "",
+    });
+    setEditingMovement(null);
+  };
+
+  const handleEditMovement = (movement: StockMovement) => {
+    setEditingMovement(movement);
+    setFormData({
+      product_id: movement.product_id,
+      movement_type: movement.movement_type,
+      quantity: movement.quantity,
+      unit_cost: movement.unit_cost || 0,
+      batch_number: movement.batch_number || "",
+      expiry_date: movement.expiry_date || "",
+      reference_type: movement.reference_type || "compra",
+      supplier_id: movement.supplier_id || "",
+      notes: movement.notes || "",
+    });
+    
+    toast({
+      title: "Editando movimentação",
+      description: "Os dados da movimentação foram carregados no formulário.",
+    });
+  };
+
+  const handleCancelEdit = () => {
+    resetForm();
+    toast({
+      title: "Edição cancelada",
+      description: "O formulário foi limpo e voltou ao modo de criação.",
+    });
   };
 
   const getMovementIcon = (type: string) => {
@@ -225,17 +285,32 @@ export default function StockMovementForm({ onSuccess }: StockMovementFormProps)
         <TabsContent value="movements" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
                 <Package className="h-5 w-5" />
-                Controle de Estoque
+                {editingMovement ? 'Editar Movimentação' : 'Controle de Estoque'}
               </CardTitle>
+              {editingMovement && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCancelEdit}
+                  className="flex items-center gap-2"
+                >
+                  <X className="h-4 w-4" />
+                  Cancelar Edição
+                </Button>
+              )}
             </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="product_id">Produto</Label>
-                <Select value={formData.product_id} onValueChange={(value) => setFormData({ ...formData, product_id: value })}>
+                <Select 
+                  value={formData.product_id} 
+                  onValueChange={(value) => setFormData({ ...formData, product_id: value })}
+                  disabled={editingMovement !== null}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um produto" />
                   </SelectTrigger>
@@ -251,7 +326,11 @@ export default function StockMovementForm({ onSuccess }: StockMovementFormProps)
 
               <div>
                 <Label htmlFor="movement_type">Tipo de Movimentação</Label>
-                <Select value={formData.movement_type} onValueChange={(value: "entrada" | "saida") => setFormData({ ...formData, movement_type: value })}>
+                <Select 
+                  value={formData.movement_type} 
+                  onValueChange={(value: "entrada" | "saida") => setFormData({ ...formData, movement_type: value })}
+                  disabled={editingMovement !== null}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -360,9 +439,19 @@ export default function StockMovementForm({ onSuccess }: StockMovementFormProps)
               />
             </div>
 
-            <Button type="submit" disabled={loading}>
-              {loading ? "Registrando..." : "Registrar Movimentação"}
-            </Button>
+            <div className="flex gap-2">
+              <Button type="submit" disabled={loading}>
+                {loading ? 
+                  (editingMovement ? "Atualizando..." : "Registrando...") : 
+                  (editingMovement ? "Atualizar Movimentação" : "Registrar Movimentação")
+                }
+              </Button>
+              {editingMovement && (
+                <Button type="button" variant="outline" onClick={handleCancelEdit}>
+                  Cancelar
+                </Button>
+              )}
+            </div>
           </form>
         </CardContent>
       </Card>
@@ -396,15 +485,32 @@ export default function StockMovementForm({ onSuccess }: StockMovementFormProps)
                           Fornecedor: {movement.suppliers.name}
                         </p>
                       )}
+                      {movement.batch_number && (
+                        <p className="text-xs text-muted-foreground">
+                          Lote: {movement.batch_number}
+                        </p>
+                      )}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-medium">{movement.quantity} un</p>
-                    {movement.unit_cost && (
-                      <p className="text-sm text-muted-foreground">
-                        R$ {movement.unit_cost.toFixed(2)}
-                      </p>
-                    )}
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="font-medium">{movement.quantity} un</p>
+                      {movement.unit_cost && (
+                        <p className="text-sm text-muted-foreground">
+                          R$ {movement.unit_cost.toFixed(2)}
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditMovement(movement)}
+                      className="flex items-center gap-1"
+                      disabled={editingMovement !== null}
+                    >
+                      <Edit className="h-3 w-3" />
+                      Editar
+                    </Button>
                   </div>
                 </div>
               ))}
