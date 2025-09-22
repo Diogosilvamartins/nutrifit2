@@ -10,8 +10,9 @@ import { AccountingEntryForm } from './AccountingEntryForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 export const AccountingEntries = () => {
-  const { entries, loading } = useAccounting();
+  const { entries, loading, deleteEntry } = useAccounting();
   const [showForm, setShowForm] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<any>(null);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -39,6 +40,22 @@ export const AccountingEntries = () => {
     }
   };
 
+  const handleEdit = (entry: any) => {
+    setEditingEntry(entry);
+    setShowForm(true);
+  };
+
+  const handleDelete = async (entryId: string) => {
+    if (window.confirm('Tem certeza que deseja excluir este lançamento?')) {
+      await deleteEntry(entryId);
+    }
+  };
+
+  const handleFormSuccess = () => {
+    setShowForm(false);
+    setEditingEntry(null);
+  };
+
   return (
     <div className="space-y-4">
       <Card>
@@ -53,9 +70,14 @@ export const AccountingEntries = () => {
             </DialogTrigger>
             <DialogContent className="max-w-4xl">
               <DialogHeader>
-                <DialogTitle>Novo Lançamento Contábil</DialogTitle>
+                <DialogTitle>
+                  {editingEntry ? 'Editar Lançamento Contábil' : 'Novo Lançamento Contábil'}
+                </DialogTitle>
               </DialogHeader>
-              <AccountingEntryForm onSuccess={() => setShowForm(false)} />
+              <AccountingEntryForm 
+                onSuccess={handleFormSuccess} 
+                editingEntry={editingEntry}
+              />
             </DialogContent>
           </Dialog>
         </CardHeader>
@@ -85,10 +107,21 @@ export const AccountingEntries = () => {
                   <TableCell>{getTypeBadge(entry.entry_type)}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Button size="sm" variant="outline">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleEdit(entry)}
+                        disabled={entry.entry_type === 'automatic'}
+                      >
                         <Edit className="h-3 w-3" />
                       </Button>
-                      <Button size="sm" variant="outline" className="text-destructive">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="text-destructive"
+                        onClick={() => handleDelete(entry.id)}
+                        disabled={entry.entry_type === 'automatic'}
+                      >
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>

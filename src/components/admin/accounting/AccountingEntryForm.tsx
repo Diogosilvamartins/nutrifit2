@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -31,10 +31,11 @@ type EntryItem = {
 
 interface AccountingEntryFormProps {
   onSuccess: () => void;
+  editingEntry?: any;
 }
 
-export const AccountingEntryForm = ({ onSuccess }: AccountingEntryFormProps) => {
-  const { accounts, createEntry, loading } = useAccounting();
+export const AccountingEntryForm = ({ onSuccess, editingEntry }: AccountingEntryFormProps) => {
+  const { accounts, createEntry, updateEntry, loading } = useAccounting();
   const [items, setItems] = useState<EntryItem[]>([]);
   const [newItem, setNewItem] = useState<EntryItem>({
     account_id: '',
@@ -46,10 +47,22 @@ export const AccountingEntryForm = ({ onSuccess }: AccountingEntryFormProps) => 
   const form = useForm<z.infer<typeof entrySchema>>({
     resolver: zodResolver(entrySchema),
     defaultValues: {
-      entry_date: new Date(),
-      description: '',
+      entry_date: editingEntry ? new Date(editingEntry.entry_date) : new Date(),
+      description: editingEntry?.description || '',
     },
   });
+
+  // Load existing items when editing
+  useEffect(() => {
+    if (editingEntry && editingEntry.items) {
+      setItems(editingEntry.items.map((item: any) => ({
+        account_id: item.account_id,
+        debit_amount: item.debit_amount || 0,
+        credit_amount: item.credit_amount || 0,
+        description: item.description || ''
+      })));
+    }
+  }, [editingEntry]);
 
   const addItem = () => {
     if (!newItem.account_id || (newItem.debit_amount === 0 && newItem.credit_amount === 0)) {
@@ -84,11 +97,17 @@ export const AccountingEntryForm = ({ onSuccess }: AccountingEntryFormProps) => 
       return;
     }
 
-    const success = await createEntry({
-      entry_date: data.entry_date,
-      description: data.description,
-      items
-    });
+    const success = editingEntry 
+      ? await updateEntry(editingEntry.id, {
+          entry_date: data.entry_date,
+          description: data.description,
+          items
+        })
+      : await createEntry({
+          entry_date: data.entry_date,
+          description: data.description,
+          items
+        });
 
     if (success) {
       form.reset();
@@ -276,7 +295,7 @@ export const AccountingEntryForm = ({ onSuccess }: AccountingEntryFormProps) => 
             type="submit" 
             disabled={loading || !isBalanced() || items.length === 0}
           >
-            {loading ? 'Salvando...' : 'Salvar Lançamento'}
+            {loading ? 'Salvando...' : (editingEntry ? 'Atualizar Lançamento' : 'Salvar Lançamento')}
           </Button>
         </div>
       </form>

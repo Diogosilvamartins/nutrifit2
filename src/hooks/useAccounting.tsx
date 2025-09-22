@@ -164,6 +164,106 @@ export const useAccounting = () => {
     }
   };
 
+  // Update accounting entry
+  const updateEntry = async (entryId: string, formData: AccountingFormData): Promise<boolean> => {
+    try {
+      setLoading(true);
+      
+      // Update entry
+      const { error: entryError } = await supabase
+        .from('accounting_entries')
+        .update({
+          entry_date: formData.entry_date.toISOString().split('T')[0],
+          description: formData.description,
+        })
+        .eq('id', entryId);
+
+      if (entryError) throw entryError;
+
+      // Delete existing items
+      const { error: deleteError } = await supabase
+        .from('accounting_entry_items')
+        .delete()
+        .eq('entry_id', entryId);
+
+      if (deleteError) throw deleteError;
+
+      // Create new items
+      const items = formData.items.map(item => ({
+        entry_id: entryId,
+        account_id: item.account_id,
+        debit_amount: item.debit_amount,
+        credit_amount: item.credit_amount,
+        description: item.description
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('accounting_entry_items')
+        .insert(items);
+
+      if (itemsError) throw itemsError;
+
+      toast({
+        title: 'Sucesso',
+        description: 'Lançamento atualizado com sucesso',
+      });
+
+      fetchEntries();
+      return true;
+    } catch (error) {
+      console.error('Error updating entry:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao atualizar lançamento',
+        variant: 'destructive',
+      });
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Delete accounting entry
+  const deleteEntry = async (entryId: string): Promise<boolean> => {
+    try {
+      setLoading(true);
+      
+      // Delete entry items first
+      const { error: itemsError } = await supabase
+        .from('accounting_entry_items')
+        .delete()
+        .eq('entry_id', entryId);
+
+      if (itemsError) throw itemsError;
+
+      // Delete entry
+      const { error: entryError } = await supabase
+        .from('accounting_entries')
+        .delete()
+        .eq('id', entryId);
+
+      if (entryError) throw entryError;
+
+      toast({
+        title: 'Sucesso',
+        description: 'Lançamento excluído com sucesso',
+      });
+
+      fetchEntries();
+      return true;
+    } catch (error) {
+      console.error('Error deleting entry:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao excluir lançamento',
+        variant: 'destructive',
+      });
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Get balance sheet data
   const getBalanceSheet = async (): Promise<BalanceSheetData | null> => {
     try {
@@ -337,8 +437,13 @@ export const useAccounting = () => {
     costCenters,
     budgets,
     loading,
-    createEntry,
+    fetchAccounts,
     fetchEntries,
+    fetchCostCenters,
+    fetchBudgets,
+    createEntry,
+    updateEntry,
+    deleteEntry,
     getBalanceSheet,
     getIncomeStatement,
     getFinancialRatios
