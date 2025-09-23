@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { 
   ShoppingCart, 
@@ -12,8 +11,6 @@ import {
   RefreshCw
 } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
-import { useOrganization } from "@/hooks/useOrganization"
-import { PlanLimitAlert } from "@/components/admin/PlanLimitAlert"
 
 interface DashboardStats {
   totalSales: number
@@ -25,7 +22,6 @@ interface DashboardStats {
 }
 
 export function AdminDashboard() {
-  const { organization, hasFeature, isTrialExpired, getTrialDaysLeft } = useOrganization()
   const [stats, setStats] = useState<DashboardStats>({
     totalSales: 0,
     totalProducts: 0,
@@ -175,37 +171,6 @@ export function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Alertas do Plano Trial */}
-      {organization && organization.subscription_status === 'trial' && (
-        <div className="space-y-2">
-          {isTrialExpired() ? (
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Período de teste expirado</AlertTitle>
-              <AlertDescription className="space-y-2">
-                <p>Seu período de teste expirou. Faça upgrade para continuar usando o sistema.</p>
-                <Button size="sm" variant="outline">Fazer Upgrade</Button>
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <Alert>
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Período de teste</AlertTitle>
-              <AlertDescription>
-                Você tem {getTrialDaysLeft()} dias restantes no seu período de teste.
-              </AlertDescription>
-            </Alert>
-          )}
-        </div>
-      )}
-
-      {/* Alertas de Limites */}
-      <div className="space-y-2">
-        <PlanLimitAlert limitType="products" />
-        <PlanLimitAlert limitType="users" />
-        <PlanLimitAlert limitType="monthly_sales" />
-      </div>
-
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Dashboard</h2>

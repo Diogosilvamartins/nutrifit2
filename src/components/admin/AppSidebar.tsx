@@ -15,8 +15,7 @@ import {
   MessageSquare,
   UserCheck,
   Home,
-  LogOut,
-  Building2
+  LogOut
 } from "lucide-react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "@/hooks/useAuth"
@@ -74,7 +73,6 @@ export function AppSidebar({ activeSection, onSectionChange }: AppSidebarProps) 
   ]
 
   const systemItems = [
-    { id: "organizacao", title: "Organização", icon: Building2 },
     { id: "usuarios", title: "Usuários", icon: UserCheck },
     { id: "sistema", title: "Configurações", icon: Settings },
     { id: "whatsapp", title: "WhatsApp", icon: MessageSquare },

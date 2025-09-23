@@ -212,7 +212,6 @@ export type Database = {
           date: string
           description: string
           id: string
-          organization_id: string | null
           reference_id: string | null
           reference_type: string | null
           type: string
@@ -225,7 +224,6 @@ export type Database = {
           date: string
           description: string
           id?: string
-          organization_id?: string | null
           reference_id?: string | null
           reference_type?: string | null
           type: string
@@ -238,7 +236,6 @@ export type Database = {
           date?: string
           description?: string
           id?: string
-          organization_id?: string | null
           reference_id?: string | null
           reference_type?: string | null
           type?: string
@@ -454,7 +451,6 @@ export type Database = {
           neighborhood: string | null
           notes: string | null
           number: string | null
-          organization_id: string | null
           phone: string | null
           state: string | null
           street: string | null
@@ -478,7 +474,6 @@ export type Database = {
           neighborhood?: string | null
           notes?: string | null
           number?: string | null
-          organization_id?: string | null
           phone?: string | null
           state?: string | null
           street?: string | null
@@ -502,7 +497,6 @@ export type Database = {
           neighborhood?: string | null
           notes?: string | null
           number?: string | null
-          organization_id?: string | null
           phone?: string | null
           state?: string | null
           street?: string | null
@@ -528,7 +522,6 @@ export type Database = {
           delivery_state: string
           delivery_zipcode: string
           id: string
-          organization_id: string | null
           payment_method: string | null
           pix_phone: string | null
           products: Json
@@ -557,7 +550,6 @@ export type Database = {
           delivery_state: string
           delivery_zipcode: string
           id?: string
-          organization_id?: string | null
           payment_method?: string | null
           pix_phone?: string | null
           products: Json
@@ -586,7 +578,6 @@ export type Database = {
           delivery_state?: string
           delivery_zipcode?: string
           id?: string
-          organization_id?: string | null
           payment_method?: string | null
           pix_phone?: string | null
           products?: Json
@@ -615,78 +606,6 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
-      }
-      organizations: {
-        Row: {
-          address: string | null
-          city: string | null
-          cnpj: string | null
-          created_at: string
-          email: string | null
-          features: Json | null
-          id: string
-          max_monthly_sales: number
-          max_products: number
-          max_users: number
-          name: string
-          owner_id: string
-          phone: string | null
-          settings: Json | null
-          slug: string
-          state: string | null
-          subscription_plan: string
-          subscription_status: string
-          trial_ends_at: string | null
-          updated_at: string
-          zipcode: string | null
-        }
-        Insert: {
-          address?: string | null
-          city?: string | null
-          cnpj?: string | null
-          created_at?: string
-          email?: string | null
-          features?: Json | null
-          id?: string
-          max_monthly_sales?: number
-          max_products?: number
-          max_users?: number
-          name: string
-          owner_id: string
-          phone?: string | null
-          settings?: Json | null
-          slug: string
-          state?: string | null
-          subscription_plan?: string
-          subscription_status?: string
-          trial_ends_at?: string | null
-          updated_at?: string
-          zipcode?: string | null
-        }
-        Update: {
-          address?: string | null
-          city?: string | null
-          cnpj?: string | null
-          created_at?: string
-          email?: string | null
-          features?: Json | null
-          id?: string
-          max_monthly_sales?: number
-          max_products?: number
-          max_users?: number
-          name?: string
-          owner_id?: string
-          phone?: string | null
-          settings?: Json | null
-          slug?: string
-          state?: string | null
-          subscription_plan?: string
-          subscription_status?: string
-          trial_ends_at?: string | null
-          updated_at?: string
-          zipcode?: string | null
-        }
-        Relationships: []
       }
       payment_splits: {
         Row: {
@@ -725,7 +644,6 @@ export type Database = {
           image_url: string | null
           min_stock_alert: number | null
           name: string
-          organization_id: string | null
           price: number
           stock_quantity: number | null
           supplier_id: string | null
@@ -740,7 +658,6 @@ export type Database = {
           image_url?: string | null
           min_stock_alert?: number | null
           name: string
-          organization_id?: string | null
           price: number
           stock_quantity?: number | null
           supplier_id?: string | null
@@ -755,7 +672,6 @@ export type Database = {
           image_url?: string | null
           min_stock_alert?: number | null
           name?: string
-          organization_id?: string | null
           price?: number
           stock_quantity?: number | null
           supplier_id?: string | null
@@ -777,8 +693,6 @@ export type Database = {
           full_name: string | null
           id: string
           is_active: boolean
-          organization_id: string | null
-          organization_role: string | null
           permissions: Json | null
           role: string
           updated_at: string
@@ -789,8 +703,6 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_active?: boolean
-          organization_id?: string | null
-          organization_role?: string | null
           permissions?: Json | null
           role?: string
           updated_at?: string
@@ -801,8 +713,6 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_active?: boolean
-          organization_id?: string | null
-          organization_role?: string | null
           permissions?: Json | null
           role?: string
           updated_at?: string
@@ -832,7 +742,6 @@ export type Database = {
           discount_amount: number
           id: string
           notes: string | null
-          organization_id: string | null
           payment_method: string | null
           payment_status: string | null
           products: Json
@@ -869,7 +778,6 @@ export type Database = {
           discount_amount?: number
           id?: string
           notes?: string | null
-          organization_id?: string | null
           payment_method?: string | null
           payment_status?: string | null
           products?: Json
@@ -906,7 +814,6 @@ export type Database = {
           discount_amount?: number
           id?: string
           notes?: string | null
-          organization_id?: string | null
           payment_method?: string | null
           payment_status?: string | null
           products?: Json
@@ -1019,7 +926,6 @@ export type Database = {
           id: string
           movement_type: string
           notes: string | null
-          organization_id: string | null
           product_id: string
           quantity: number
           reference_id: string | null
@@ -1038,7 +944,6 @@ export type Database = {
           id?: string
           movement_type: string
           notes?: string | null
-          organization_id?: string | null
           product_id: string
           quantity: number
           reference_id?: string | null
@@ -1057,7 +962,6 @@ export type Database = {
           id?: string
           movement_type?: string
           notes?: string | null
-          organization_id?: string | null
           product_id?: string
           quantity?: number
           reference_id?: string | null
@@ -1085,54 +989,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      subscription_plans: {
-        Row: {
-          created_at: string
-          description: string | null
-          features: Json | null
-          id: string
-          is_active: boolean
-          max_monthly_sales: number
-          max_products: number
-          max_users: number
-          name: string
-          price_monthly: number
-          price_yearly: number
-          slug: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          features?: Json | null
-          id?: string
-          is_active?: boolean
-          max_monthly_sales?: number
-          max_products?: number
-          max_users?: number
-          name: string
-          price_monthly?: number
-          price_yearly?: number
-          slug: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          features?: Json | null
-          id?: string
-          is_active?: boolean
-          max_monthly_sales?: number
-          max_products?: number
-          max_users?: number
-          name?: string
-          price_monthly?: number
-          price_yearly?: number
-          slug?: string
-          updated_at?: string
-        }
-        Relationships: []
       }
       suppliers: {
         Row: {
@@ -1286,10 +1142,6 @@ export type Database = {
       }
       check_available_stock: {
         Args: { product_uuid: string; required_quantity: number }
-        Returns: boolean
-      }
-      check_plan_limits: {
-        Args: { limit_type: string; org_id: string }
         Returns: boolean
       }
       check_user_permission: {
