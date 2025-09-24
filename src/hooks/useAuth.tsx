@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createContext, useContext, type ReactNode } from "react";
+import { useState, useEffect, createContext, useContext, type ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -9,6 +9,8 @@ interface UserProfile {
   role: 'admin' | 'manager' | 'salesperson' | 'user';
   permissions: Record<string, boolean>;
   is_active: boolean;
+  organization_id?: string;
+  organization_role?: string;
 }
 
 interface AuthContextType {
