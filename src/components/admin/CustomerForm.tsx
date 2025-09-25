@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -61,6 +61,7 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
   const [loading, setLoading] = useState(false);
   const [searchingCEP, setSearchingCEP] = useState(false);
   const [cpfError, setCpfError] = useState('');
+  const [cepSearchTimeout, setCepSearchTimeout] = useState<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
   const handleInputChange = (field: keyof Customer, value: string) => {
@@ -69,6 +70,31 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
     // Clear CPF error when user types
     if (field === 'cpf') {
       setCpfError('');
+    }
+    
+    // Auto-search CEP when user finishes typing
+    if (field === 'zipcode') {
+      if (cepSearchTimeout) {
+        clearTimeout(cepSearchTimeout);
+      }
+      
+      // Clean and format CEP as user types
+      const cleanCEP = value.replace(/\D/g, '');
+      const formattedCEP = cleanCEP.length <= 8 ? 
+        cleanCEP.replace(/(\d{5})(\d{1,3})/, '$1-$2') : 
+        cleanCEP.slice(0, 8).replace(/(\d{5})(\d{3})/, '$1-$2');
+      
+      setFormData(prev => ({ ...prev, [field]: formattedCEP }));
+      
+      // Auto-search when CEP is complete (8 digits)
+      if (cleanCEP.length === 8) {
+        const timeout = setTimeout(() => {
+          console.log('[CustomerForm] Auto-buscando CEP:', cleanCEP);
+          handleCEPSearch(cleanCEP);
+        }, 1000); // Wait 1 second after user stops typing
+        setCepSearchTimeout(timeout);
+      }
+      return;
     }
   };
 
@@ -83,27 +109,37 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
     }
   };
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (cepSearchTimeout) {
+        clearTimeout(cepSearchTimeout);
+      }
+    };
+  }, [cepSearchTimeout]);
+
   const handlePhoneBlur = () => {
     if (formData.phone) {
       setFormData(prev => ({ ...prev, phone: formatPhone(prev.phone || '') }));
     }
   };
 
-  const handleCEPSearch = async () => {
-    if (!formData.zipcode || !validateCEP(formData.zipcode)) {
-      toast({
-        title: "CEP inválido",
-        description: "Por favor, insira um CEP válido com 8 dígitos.",
-        variant: "destructive"
-      });
+  const handleCEPSearch = useCallback(async (cepToSearch?: string) => {
+    const cep = cepToSearch || formData.zipcode;
+    console.log('[CustomerForm] Iniciando busca CEP:', cep);
+    
+    if (!cep || !validateCEP(cep)) {
+      console.log('[CustomerForm] CEP inválido para busca:', cep);
       return;
     }
 
     setSearchingCEP(true);
     try {
-      const addressData = await fetchAddressByCEP(formData.zipcode);
+      console.log('[CustomerForm] Chamando fetchAddressByCEP...');
+      const addressData = await fetchAddressByCEP(cep);
       
       if (addressData) {
+        console.log('[CustomerForm] Endereço encontrado, atualizando formulário:', addressData);
         setFormData(prev => ({
           ...prev,
           zipcode: formatCEP(addressData.cep),
@@ -115,25 +151,27 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
         
         toast({
           title: "Endereço encontrado!",
-          description: "Dados do endereço preenchidos automaticamente."
+          description: `${addressData.logradouro}, ${addressData.bairro} - ${addressData.localidade}/${addressData.uf}`
         });
       } else {
+        console.log('[CustomerForm] Nenhum endereço encontrado para o CEP');
         toast({
           title: "CEP não encontrado",
-          description: "Verifique o CEP e tente novamente.",
+          description: "Verifique o CEP digitado e tente novamente.",
           variant: "destructive"
         });
       }
     } catch (error) {
+      console.error('[CustomerForm] Erro ao buscar CEP:', error);
       toast({
         title: "Erro ao buscar CEP",
-        description: "Tente novamente em alguns instantes.",
+        description: "Verifique sua conexão e tente novamente.",
         variant: "destructive"
       });
     } finally {
       setSearchingCEP(false);
     }
-  };
+  }, [formData.zipcode, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -355,10 +393,15 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
                     type="button"
                     variant="outline"
                     size="icon"
-                    onClick={handleCEPSearch}
+                    onClick={() => handleCEPSearch()}
                     disabled={searchingCEP}
+                    title="Buscar endereço pelo CEP"
                   >
-                    <Search className="w-4 h-4" />
+                    {searchingCEP ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                    ) : (
+                      <Search className="w-4 h-4" />
+                    )}
                   </Button>
                 </div>
               </div>
