@@ -11,7 +11,7 @@ import {
   RefreshCw
 } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
-
+import { getBrazilDateInfo } from "@/lib/utils"
 interface DashboardStats {
   totalSales: number
   totalProducts: number
@@ -67,26 +67,23 @@ export function AdminDashboard() {
         .select('*', { count: 'exact', head: true })
         .lt('stock_quantity', 10)
 
-      // Vendas de hoje - corrigido para considerar timezone brasileiro
-      // Como as vendas estão sendo feitas no Brasil, vamos usar a data de 25/09/2025
-      const today = '2025-09-25' // Data das vendas registradas
-      const todayStart = `${today}T00:00:00.000Z`
-      const todayEnd = `${today}T23:59:59.999Z`
+      // Vendas de hoje (fuso America/Sao_Paulo)
+      const { date: todayBR, startUTC, endUTC } = getBrazilDateInfo()
       
       // Vendas de hoje via orders (pedidos online)
       const { count: todayOrdersCount } = await supabase
         .from('orders')
         .select('*', { count: 'exact', head: true })
-        .gte('created_at', todayStart)
-        .lte('created_at', todayEnd)
+        .gte('created_at', startUTC)
+        .lte('created_at', endUTC)
 
-      // Vendas de hoje - todas as vendas do dia 25/09/2025
+      // Vendas de hoje via quotes (todas as vendas do dia)
       const { count: todayQuotesCount } = await supabase
         .from('quotes')
         .select('*', { count: 'exact', head: true })
         .eq('quote_type', 'sale')
         .eq('status', 'completed')
-        .eq('sale_date', today)
+        .eq('sale_date', todayBR)
 
       const totalSalesCount = (ordersCount || 0) + (quoteSalesCount || 0)
       const totalTodaySales = (todayOrdersCount || 0) + (todayQuotesCount || 0)

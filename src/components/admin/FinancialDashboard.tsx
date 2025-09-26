@@ -7,8 +7,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-// Função para formatar valores em reais
-import { formatCurrency } from "@/lib/utils";
+// Função para formatar valores em reais e utilitários de data (BR)
+import { formatCurrency, getBrazilDateInfo, formatBRDateFromYMD } from "@/lib/utils";
 
 interface DailySales {
   date: string;
@@ -118,7 +118,7 @@ export default function FinancialDashboard() {
         daysBack = 30;
     }
 
-    const todayString = '2025-09-25'; // Data das vendas registradas - corrigido para consistência
+    const { date: todayString, startUTC } = getBrazilDateInfo();
 
     // Fetch from quotes (in-store sales) - considerar tanto created_at quanto sale_date
     let quotes: any[] = [];
