@@ -180,9 +180,11 @@ export default function FinancialDashboard() {
     // Group by date
     const salesByDate: { [date: string]: { sales: number; orders: number; canceled: number; total: number } } = {};
 
-    // Process quotes (non-canceled)
+    // Process quotes (non-canceled) - usar sale_date quando disponível
     quotes?.filter(quote => quote.status !== 'canceled').forEach(quote => {
-      const date = new Date(quote.created_at).toLocaleDateString('pt-BR');
+      // Priorizar sale_date, se não tiver usar created_at
+      const dateToUse = quote.sale_date || new Date(quote.created_at).toISOString().split('T')[0];
+      const date = new Date(dateToUse).toLocaleDateString('pt-BR');
       if (!salesByDate[date]) {
         salesByDate[date] = { sales: 0, orders: 0, canceled: 0, total: 0 };
       }
