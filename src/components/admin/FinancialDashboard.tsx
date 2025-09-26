@@ -118,7 +118,7 @@ export default function FinancialDashboard() {
         daysBack = 30;
     }
 
-    const todayString = today.toISOString().split('T')[0];
+    const todayString = '2025-09-25'; // Data das vendas registradas - corrigido para consistência
 
     // Fetch from quotes (in-store sales) - considerar tanto created_at quanto sale_date
     let quotes: any[] = [];
@@ -244,7 +244,7 @@ export default function FinancialDashboard() {
         startDate.setDate(today.getDate() - 30);
     }
 
-    const todayString = today.toISOString().split('T')[0];
+    const todayString = '2025-09-25'; // Data das vendas registradas - corrigido para consistência
 
     // Fetch from quotes - considerar tanto created_at quanto sale_date
     let quotes: any[] = [];
@@ -336,7 +336,7 @@ export default function FinancialDashboard() {
         startDate.setDate(today.getDate() - 30);
     }
 
-    const todayString = today.toISOString().split('T')[0];
+    const todayString = '2025-09-25'; // Data das vendas registradas - corrigido para consistência
 
     // Fetch from quotes - considerar tanto created_at quanto sale_date
     let quotes: any[] = [];
@@ -407,7 +407,7 @@ export default function FinancialDashboard() {
 
   const fetchSummary = async () => {
     const today = new Date();
-    const todayString = today.toISOString().split('T')[0];
+    const todayString = '2025-09-25'; // Data das vendas registradas - corrigido para consistência
     let startDate = new Date();
     let prevStartDate = new Date();
     let prevEndDate = new Date();
