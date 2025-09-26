@@ -67,33 +67,38 @@ export function AdminDashboard() {
         .select('*', { count: 'exact', head: true })
         .lt('stock_quantity', 10)
 
-      // Vendas de hoje - considerar tanto created_at quanto sale_date
+      // Vendas de hoje - melhor lógica para contar corretamente
       const today = new Date().toISOString().split('T')[0]
+      const todayStart = `${today}T00:00:00.000Z`
+      const todayEnd = `${today}T23:59:59.999Z`
       
-      // Vendas de hoje via orders
+      // Vendas de hoje via orders (pedidos online)
       const { count: todayOrdersCount } = await supabase
         .from('orders')
         .select('*', { count: 'exact', head: true })
-        .gte('created_at', today)
+        .gte('created_at', todayStart)
+        .lte('created_at', todayEnd)
 
-      // Vendas de hoje via quotes (created_at hoje)
-      const { count: todayQuotesCreatedCount } = await supabase
-        .from('quotes')
-        .select('*', { count: 'exact', head: true })
-        .eq('quote_type', 'sale')
-        .eq('status', 'completed')
-        .gte('created_at', today)
-
-      // Vendas de hoje via quotes (sale_date hoje)
-      const { count: todayQuotesSaleDateCount } = await supabase
+      // Vendas de hoje via quotes - priorizar sale_date, depois created_at
+      const { count: todayQuotesBySaleDate } = await supabase
         .from('quotes')
         .select('*', { count: 'exact', head: true })
         .eq('quote_type', 'sale')
         .eq('status', 'completed')
         .eq('sale_date', today)
 
+      // Vendas de hoje via quotes que não têm sale_date mas foram criadas hoje
+      const { count: todayQuotesByCreatedAt } = await supabase
+        .from('quotes')
+        .select('*', { count: 'exact', head: true })
+        .eq('quote_type', 'sale')
+        .eq('status', 'completed')
+        .is('sale_date', null)
+        .gte('created_at', todayStart)
+        .lte('created_at', todayEnd)
+
       const totalSalesCount = (ordersCount || 0) + (quoteSalesCount || 0)
-      const totalTodaySales = (todayOrdersCount || 0) + (todayQuotesCreatedCount || 0) + (todayQuotesSaleDateCount || 0)
+      const totalTodaySales = (todayOrdersCount || 0) + (todayQuotesBySaleDate || 0) + (todayQuotesByCreatedAt || 0)
 
       setStats({
         totalSales: totalSalesCount,
