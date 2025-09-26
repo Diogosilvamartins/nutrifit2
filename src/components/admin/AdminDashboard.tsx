@@ -67,7 +67,7 @@ export function AdminDashboard() {
         .select('*', { count: 'exact', head: true })
         .lt('stock_quantity', 10)
 
-      // Vendas de hoje - melhor lógica para contar corretamente
+      // Vendas de hoje - lógica simplificada e correta
       const today = new Date().toISOString().split('T')[0]
       const todayStart = `${today}T00:00:00.000Z`
       const todayEnd = `${today}T23:59:59.999Z`
@@ -79,26 +79,19 @@ export function AdminDashboard() {
         .gte('created_at', todayStart)
         .lte('created_at', todayEnd)
 
-      // Vendas de hoje via quotes - priorizar sale_date, depois created_at
-      const { count: todayQuotesBySaleDate } = await supabase
+      // Vendas de hoje via quotes - TODAS as vendas que aconteceram hoje
+      // Prioriza sale_date, mas se não tiver, usa created_at
+      const { data: todayQuotesData } = await supabase
         .from('quotes')
-        .select('*', { count: 'exact', head: true })
+        .select('id, sale_date, created_at')
         .eq('quote_type', 'sale')
         .eq('status', 'completed')
-        .eq('sale_date', today)
+        .or(`sale_date.eq.${today},and(sale_date.is.null,created_at.gte.${todayStart},created_at.lte.${todayEnd})`)
 
-      // Vendas de hoje via quotes que não têm sale_date mas foram criadas hoje
-      const { count: todayQuotesByCreatedAt } = await supabase
-        .from('quotes')
-        .select('*', { count: 'exact', head: true })
-        .eq('quote_type', 'sale')
-        .eq('status', 'completed')
-        .is('sale_date', null)
-        .gte('created_at', todayStart)
-        .lte('created_at', todayEnd)
+      const todayQuotesCount = todayQuotesData?.length || 0
 
       const totalSalesCount = (ordersCount || 0) + (quoteSalesCount || 0)
-      const totalTodaySales = (todayOrdersCount || 0) + (todayQuotesBySaleDate || 0) + (todayQuotesByCreatedAt || 0)
+      const totalTodaySales = (todayOrdersCount || 0) + todayQuotesCount
 
       setStats({
         totalSales: totalSalesCount,
