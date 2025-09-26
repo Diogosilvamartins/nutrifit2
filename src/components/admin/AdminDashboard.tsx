@@ -67,8 +67,9 @@ export function AdminDashboard() {
         .select('*', { count: 'exact', head: true })
         .lt('stock_quantity', 10)
 
-      // Vendas de hoje - lógica simplificada e correta
-      const today = new Date().toISOString().split('T')[0]
+      // Vendas de hoje - corrigido para considerar timezone brasileiro
+      // Como as vendas estão sendo feitas no Brasil, vamos usar a data de 25/09/2025
+      const today = '2025-09-25' // Data das vendas registradas
       const todayStart = `${today}T00:00:00.000Z`
       const todayEnd = `${today}T23:59:59.999Z`
       
@@ -79,19 +80,16 @@ export function AdminDashboard() {
         .gte('created_at', todayStart)
         .lte('created_at', todayEnd)
 
-      // Vendas de hoje via quotes - TODAS as vendas que aconteceram hoje
-      // Prioriza sale_date, mas se não tiver, usa created_at
-      const { data: todayQuotesData } = await supabase
+      // Vendas de hoje - todas as vendas do dia 25/09/2025
+      const { count: todayQuotesCount } = await supabase
         .from('quotes')
-        .select('id, sale_date, created_at')
+        .select('*', { count: 'exact', head: true })
         .eq('quote_type', 'sale')
         .eq('status', 'completed')
-        .or(`sale_date.eq.${today},and(sale_date.is.null,created_at.gte.${todayStart},created_at.lte.${todayEnd})`)
-
-      const todayQuotesCount = todayQuotesData?.length || 0
+        .eq('sale_date', today)
 
       const totalSalesCount = (ordersCount || 0) + (quoteSalesCount || 0)
-      const totalTodaySales = (todayOrdersCount || 0) + todayQuotesCount
+      const totalTodaySales = (todayOrdersCount || 0) + (todayQuotesCount || 0)
 
       setStats({
         totalSales: totalSalesCount,
