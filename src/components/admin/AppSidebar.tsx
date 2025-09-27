@@ -70,6 +70,7 @@ export function AppSidebar({ activeSection, onSectionChange }: AppSidebarProps) 
   const financeItems = [
     { id: "financeiro", title: "Dashboard", icon: DollarSign },
     { id: "contabilidade", title: "Contabilidade", icon: Calculator },
+    { id: "fiscal", title: "Módulo Fiscal", icon: FileText },
   ]
 
   const systemItems = [

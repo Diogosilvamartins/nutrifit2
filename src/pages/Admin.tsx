@@ -27,6 +27,7 @@ import SalesReport from "@/components/admin/SalesReport";
 import { DownloadImage } from "@/components/ui/download-image";
 import { WhatsAppTemplates } from "@/components/templates/WhatsAppTemplates";
 import { AccountingModule } from "@/components/admin/accounting/AccountingModule";
+import { FiscalModule } from "@/components/admin/fiscal/FiscalModule";
 import { AppSidebar } from "@/components/admin/AppSidebar";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 
@@ -168,6 +169,8 @@ const Admin = () => {
         )
       case "contabilidade":
         return <AccountingModule />
+      case "fiscal":
+        return <FiscalModule />
       case "clientes":
         return (
           <div className="grid gap-6 lg:grid-cols-2">
@@ -249,6 +252,7 @@ const Admin = () => {
       case "comissoes": return "Comissões";
       case "financeiro": return "Financeiro";
       case "contabilidade": return "Contabilidade";
+      case "fiscal": return "Módulo Fiscal";
       case "clientes": return "Clientes";
       case "produtos": return "Produtos";
       case "fornecedores": return "Fornecedores";

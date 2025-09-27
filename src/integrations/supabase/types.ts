@@ -511,6 +511,179 @@ export type Database = {
         }
         Relationships: []
       }
+      fiscal_invoice_items: {
+        Row: {
+          cfop: string | null
+          codigo_produto: string
+          created_at: string
+          descricao: string
+          ean: string | null
+          id: string
+          invoice_id: string
+          ncm: string | null
+          numero_item: number
+          quantidade: number
+          unidade: string
+          valor_cofins: number | null
+          valor_icms: number | null
+          valor_ipi: number | null
+          valor_pis: number | null
+          valor_total: number
+          valor_unitario: number
+        }
+        Insert: {
+          cfop?: string | null
+          codigo_produto: string
+          created_at?: string
+          descricao: string
+          ean?: string | null
+          id?: string
+          invoice_id: string
+          ncm?: string | null
+          numero_item: number
+          quantidade: number
+          unidade: string
+          valor_cofins?: number | null
+          valor_icms?: number | null
+          valor_ipi?: number | null
+          valor_pis?: number | null
+          valor_total: number
+          valor_unitario: number
+        }
+        Update: {
+          cfop?: string | null
+          codigo_produto?: string
+          created_at?: string
+          descricao?: string
+          ean?: string | null
+          id?: string
+          invoice_id?: string
+          ncm?: string | null
+          numero_item?: number
+          quantidade?: number
+          unidade?: string
+          valor_cofins?: number | null
+          valor_icms?: number | null
+          valor_ipi?: number | null
+          valor_pis?: number | null
+          valor_total?: number
+          valor_unitario?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fiscal_invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "fiscal_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fiscal_invoices: {
+        Row: {
+          chave_nfe: string
+          created_at: string
+          created_by: string | null
+          dest_cnpj_cpf: string | null
+          dest_endereco: Json | null
+          dest_nome: string
+          dhemi: string
+          dhsaient: string | null
+          emit_cnpj: string | null
+          emit_endereco: Json | null
+          emit_fantasia: string | null
+          emit_ie: string | null
+          emit_nome: string
+          id: string
+          imported_at: string | null
+          natureza_operacao: string
+          numero_nfe: string
+          organization_id: string | null
+          protocolo: string | null
+          serie: string
+          situacao: string
+          tipo_nf: number
+          updated_at: string
+          valor_cofins: number | null
+          valor_desconto: number | null
+          valor_frete: number | null
+          valor_icms: number | null
+          valor_ipi: number | null
+          valor_pis: number | null
+          valor_produtos: number
+          valor_total: number
+          xml_content: string | null
+        }
+        Insert: {
+          chave_nfe: string
+          created_at?: string
+          created_by?: string | null
+          dest_cnpj_cpf?: string | null
+          dest_endereco?: Json | null
+          dest_nome: string
+          dhemi: string
+          dhsaient?: string | null
+          emit_cnpj?: string | null
+          emit_endereco?: Json | null
+          emit_fantasia?: string | null
+          emit_ie?: string | null
+          emit_nome: string
+          id?: string
+          imported_at?: string | null
+          natureza_operacao: string
+          numero_nfe: string
+          organization_id?: string | null
+          protocolo?: string | null
+          serie: string
+          situacao?: string
+          tipo_nf: number
+          updated_at?: string
+          valor_cofins?: number | null
+          valor_desconto?: number | null
+          valor_frete?: number | null
+          valor_icms?: number | null
+          valor_ipi?: number | null
+          valor_pis?: number | null
+          valor_produtos?: number
+          valor_total?: number
+          xml_content?: string | null
+        }
+        Update: {
+          chave_nfe?: string
+          created_at?: string
+          created_by?: string | null
+          dest_cnpj_cpf?: string | null
+          dest_endereco?: Json | null
+          dest_nome?: string
+          dhemi?: string
+          dhsaient?: string | null
+          emit_cnpj?: string | null
+          emit_endereco?: Json | null
+          emit_fantasia?: string | null
+          emit_ie?: string | null
+          emit_nome?: string
+          id?: string
+          imported_at?: string | null
+          natureza_operacao?: string
+          numero_nfe?: string
+          organization_id?: string | null
+          protocolo?: string | null
+          serie?: string
+          situacao?: string
+          tipo_nf?: number
+          updated_at?: string
+          valor_cofins?: number | null
+          valor_desconto?: number | null
+          valor_frete?: number | null
+          valor_icms?: number | null
+          valor_ipi?: number | null
+          valor_pis?: number | null
+          valor_produtos?: number
+          valor_total?: number
+          xml_content?: string | null
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           canceled_at: string | null
