@@ -21,6 +21,12 @@ interface DashboardStats {
   pendingOrders: number
 }
 
+interface LowStockProduct {
+  id: string
+  name: string
+  stock_quantity: number
+}
+
 export function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     totalSales: 0,
@@ -30,6 +36,7 @@ export function AdminDashboard() {
     todaySales: 0,
     pendingOrders: 0
   })
+  const [lowStockProducts, setLowStockProducts] = useState<LowStockProduct[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -67,6 +74,14 @@ export function AdminDashboard() {
         .select('*', { count: 'exact', head: true })
         .lt('stock_quantity', 10)
 
+      // Buscar produtos com estoque baixo para mostrar nos alertas
+      const { data: lowStockProductsData } = await supabase
+        .from('products')
+        .select('id, name, stock_quantity')
+        .lt('stock_quantity', 10)
+        .order('stock_quantity', { ascending: true })
+        .limit(5)
+
       // Vendas de hoje (fuso America/Sao_Paulo)
       const { date: todayBR, startUTC, endUTC } = getBrazilDateInfo()
       
@@ -96,6 +111,8 @@ export function AdminDashboard() {
         todaySales: totalTodaySales,
         pendingOrders: 0 // Implementar se houver status de pedidos
       })
+
+      setLowStockProducts(lowStockProductsData || [])
     } catch (error) {
       console.error('Erro ao carregar estatísticas:', error)
     } finally {
@@ -229,12 +246,22 @@ export function AdminDashboard() {
             <CardTitle className="text-lg">Alertas</CardTitle>
           </CardHeader>
           <CardContent>
-            {stats.lowStockProducts > 0 ? (
-              <div className="flex items-center gap-2 text-red-600">
-                <AlertTriangle className="h-4 w-4" />
-                <span className="text-sm">
-                  {stats.lowStockProducts} produtos com estoque baixo
-                </span>
+            {lowStockProducts.length > 0 ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-red-600 mb-3">
+                  <AlertTriangle className="h-4 w-4" />
+                  <span className="text-sm font-medium">
+                    Produtos com estoque baixo:
+                  </span>
+                </div>
+                {lowStockProducts.map((product) => (
+                  <div key={product.id} className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">{product.name}</span>
+                    <span className="text-red-600 font-medium">
+                      {product.stock_quantity} unidades
+                    </span>
+                  </div>
+                ))}
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
